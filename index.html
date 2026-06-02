@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Walid's Counter</title>
+
+<style>
+html, body {
+    margin: 0;
+    height: 100%;
+    background: #000;
+    overflow: hidden;
+}
+
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: 'Share Tech Mono', monospace;
+}
+
+.container {
+    text-align: center;
+}
+
+.title {
+    color: #666;
+    font-size: 2vw;
+    letter-spacing: 0.5vw;
+    margin-bottom: 2vh;
+}
+
+.clock {
+    color: #ffffff;
+    text-shadow:
+        0 0 10px #ffffff,
+        0 0 20px #ffffff,
+        0 0 40px #ffffff;
+    font-size: 9vw;
+    line-height: 1.1;
+}
+
+.labels {
+    color: #888;
+    font-size: 1.5vw;
+    letter-spacing: 0.3vw;
+    margin-top: 1vh;
+}
+
+.footer {
+    color: #444;
+    font-size: 1vw;
+    margin-top: 3vh;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+    <div class="title">Walid's Counter</div>
+
+    <div class="clock" id="clock">
+        T-000:00:00:00
+    </div>
+
+    <div class="labels">
+        DAYS : HOURS : MINUTES : SECONDS
+    </div>
+
+    <div class="footer" id="targetDate"></div>
+</div>
+
+<script>
+// Target launch date and time
+const targetDate = new Date("2026-08-03T10:00:00");
+
+// Format as DD/MM/YYYY
+const day = String(targetDate.getDate()).padStart(2, '0');
+const month = String(targetDate.getMonth() + 1).padStart(2, '0');
+const year = targetDate.getFullYear();
+
+document.getElementById("targetDate").innerText =
+    `TARGET DATE: ${day}/${month}/${year}`;
+
+function updateCountdown() {
+    const now = new Date();
+    let diff = targetDate - now;
+
+    if (diff <= 0) {
+        document.getElementById("clock").innerHTML =
+            "T+000:00:00:00";
+        return;
+    }
+
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    diff %= (1000 * 60 * 60 * 24);
+
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    diff %= (1000 * 60 * 60);
+
+    const minutes = Math.floor(diff / (1000 * 60));
+    diff %= (1000 * 60);
+
+    const seconds = Math.floor(diff / 1000);
+
+    document.getElementById("clock").innerHTML =
+        `T-${String(days).padStart(3, '0')}:` +
+        `${String(hours).padStart(2, '0')}:` +
+        `${String(minutes).padStart(2, '0')}:` +
+        `${String(seconds).padStart(2, '0')}`;
+}
+
+updateCountdown();
+setInterval(updateCountdown, 1000);
+</script>
+
+</body>
+</html>
