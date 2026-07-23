@@ -4,12 +4,18 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Walid's Counter</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=VT323&display=swap" rel="stylesheet">
 <style>
   :root{
-    --ink: #f5f5f7;
-    --sub: rgba(245,245,247,0.56);
-    --glass: rgba(255,255,255,0.06);
-    --glass-border: rgba(255,255,255,0.14);
+    --bg: #000000;
+    --grid: rgba(0, 255, 65, 0.05);
+    --cyan: #39ff14;
+    --cyan-dim: #0d4d10;
+    --amber: #baffc9;
+    --text: #b6ffb0;
+    --dim: #2f8a2f;
+    --panel-line: rgba(57, 255, 20, 0.22);
   }
 
   *{ box-sizing: border-box; }
@@ -17,7 +23,7 @@
   html, body{
     margin: 0;
     height: 100%;
-    background: #000;
+    background: var(--bg);
     overflow: hidden;
   }
 
@@ -25,183 +31,241 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+    font-family: 'VT323', monospace;
     position: relative;
   }
 
-  /* soft aurora glow, Apple-keynote style */
-  .aurora{
+  /* Digital rain canvas sits behind everything */
+  #matrixRain{
     position: absolute;
     inset: 0;
-    overflow: hidden;
+    display: block;
+  }
+
+  /* vignette to keep the frame readable over the rain */
+  body::after{
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at center, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.92) 100%);
     pointer-events: none;
   }
-  .aurora span{
-    position: absolute;
-    border-radius: 50%;
-    filter: blur(90px);
-    opacity: 0.55;
-    animation: drift 18s ease-in-out infinite alternate;
-  }
-  .aurora span:nth-child(1){
-    width: 42vw; height: 42vw;
-    background: #5e6bff;
-    top: -10%; left: -8%;
-    animation-delay: 0s;
-  }
-  .aurora span:nth-child(2){
-    width: 38vw; height: 38vw;
-    background: #ff5ea8;
-    bottom: -12%; right: -6%;
-    animation-delay: 4s;
-  }
-  .aurora span:nth-child(3){
-    width: 30vw; height: 30vw;
-    background: #46e0c4;
-    bottom: 6%; left: 12%;
-    animation-delay: 8s;
-    opacity: 0.35;
-  }
-  @keyframes drift{
-    0%{ transform: translate(0,0) scale(1); }
-    100%{ transform: translate(4%, -4%) scale(1.08); }
+
+  .frame{
+    position: relative;
+    padding: 5.5vw 6.5vw;
+    text-align: center;
+    background: rgba(0, 8, 0, 0.45);
+    backdrop-filter: blur(2px);
   }
 
-  .container{
-    position: relative;
-    z-index: 1;
-    text-align: center;
-    padding: 4vw;
+  /* corner brackets, HUD-style */
+  .frame::before, .frame::after,
+  .corner-tr, .corner-bl{
+    content: "";
+    position: absolute;
+    width: 28px;
+    height: 28px;
+    border: 2px solid var(--cyan-dim);
   }
+  .frame::before{ top: 0; left: 0; border-right: none; border-bottom: none; }
+  .frame::after{ bottom: 0; right: 0; border-left: none; border-top: none; }
+  .corner-tr{ top: 0; right: 0; border-left: none; border-bottom: none; }
+  .corner-bl{ bottom: 0; left: 0; border-right: none; border-top: none; }
 
   .eyebrow{
-    color: var(--sub);
-    font-size: 1vw;
-    font-weight: 590;
-    letter-spacing: 0.02em;
-    margin-bottom: 2.2vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.8vw;
+    color: var(--dim);
+    font-size: 1.3vw;
+    letter-spacing: 0.45vw;
+    margin-bottom: 3vh;
     text-transform: uppercase;
   }
-
-  .title{
-    color: var(--ink);
-    font-size: 2.6vw;
-    font-weight: 600;
-    letter-spacing: -0.02em;
-    margin-bottom: 5vh;
-    background: linear-gradient(90deg, #fff, #c9c9d6);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
+  .eyebrow .dot{
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--cyan);
+    box-shadow: 0 0 8px var(--cyan);
+    animation: blink 1.6s ease-in-out infinite;
+  }
+  @keyframes blink{
+    0%, 100%{ opacity: 1; }
+    50%{ opacity: 0.25; }
   }
 
-  .units{
-    display: flex;
-    gap: 1.4vw;
-    justify-content: center;
-  }
-
-  .unit{
-    background: var(--glass);
-    border: 1px solid var(--glass-border);
-    backdrop-filter: blur(20px) saturate(160%);
-    -webkit-backdrop-filter: blur(20px) saturate(160%);
-    border-radius: 1.4vw;
-    padding: 2.4vw 1.8vw;
-    min-width: 8vw;
-    box-shadow:
-      0 1px 0 rgba(255,255,255,0.08) inset,
-      0 20px 40px rgba(0,0,0,0.35);
-  }
-
-  .unit .value{
-    font-size: 4.2vw;
-    font-weight: 650;
-    color: var(--ink);
+  .clock{
+    font-family: 'Space Mono', monospace;
+    font-weight: 700;
+    color: var(--text);
+    font-size: 8vw;
     line-height: 1;
-    letter-spacing: -0.02em;
+    letter-spacing: 0.01em;
+    text-shadow:
+      0 0 6px rgba(94,234,212,0.5),
+      0 0 24px rgba(94,234,212,0.25),
+      0 0 60px rgba(94,234,212,0.12);
     font-variant-numeric: tabular-nums;
   }
+  .clock .unit-sep{
+    color: var(--cyan-dim);
+    margin: 0 0.15vw;
+  }
+  .clock.launched{
+    color: var(--amber);
+    text-shadow:
+      0 0 8px rgba(186,255,201,0.8),
+      0 0 30px rgba(57,255,20,0.5),
+      0 0 80px rgba(57,255,20,0.25);
+  }
 
-  .unit .label{
-    margin-top: 1vh;
-    font-size: 0.85vw;
-    color: var(--sub);
-    letter-spacing: 0.06em;
+  .labels{
+    display: flex;
+    justify-content: center;
+    gap: 3.4vw;
+    color: var(--dim);
+    font-size: 1.15vw;
+    letter-spacing: 0.28vw;
+    margin-top: 1.6vh;
     text-transform: uppercase;
-    font-weight: 590;
   }
 
-  .footer{
-    margin-top: 4vh;
-    color: var(--sub);
-    font-size: 0.85vw;
-    font-weight: 510;
-    letter-spacing: 0.01em;
+  .divider{
+    width: 100%;
+    max-width: 360px;
+    height: 1px;
+    margin: 3.2vh auto 2.6vh;
+    background: linear-gradient(90deg, transparent, var(--panel-line), transparent);
   }
 
-  .container.launched .value{
-    background: linear-gradient(90deg, #5e6bff, #ff5ea8);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
+  .meta{
+    display: flex;
+    justify-content: space-between;
+    gap: 3vw;
+    color: var(--dim);
+    font-size: 1.05vw;
+    letter-spacing: 0.12vw;
+  }
+  .meta span{ color: var(--cyan); }
+
+  .progress-track{
+    margin-top: 2.4vh;
+    width: 100%;
+    max-width: 360px;
+    height: 3px;
+    background: rgba(94,234,212,0.1);
+    margin-left: auto;
+    margin-right: auto;
+    position: relative;
+    overflow: hidden;
+  }
+  .progress-fill{
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    background: var(--cyan);
+    box-shadow: 0 0 10px var(--cyan);
+    width: 0%;
+    transition: width 1s linear;
   }
 
   @media (max-width: 640px){
-    .title{ font-size: 5.2vw; }
-    .eyebrow{ font-size: 3vw; }
-    .units{ flex-wrap: wrap; gap: 3vw; }
-    .unit{ min-width: 20vw; padding: 5vw 3vw; border-radius: 5vw; }
-    .unit .value{ font-size: 9vw; }
-    .unit .label{ font-size: 2.4vw; }
-    .footer{ font-size: 2.6vw; }
+    .clock{ font-size: 12vw; }
+    .eyebrow{ font-size: 2.6vw; letter-spacing: 0.3vw; }
+    .labels{ font-size: 2.2vw; gap: 4vw; }
+    .meta{ font-size: 2.2vw; flex-direction: column; gap: 0.6vh; }
   }
 </style>
 </head>
 <body>
 
-<div class="aurora"><span></span><span></span><span></span></div>
+<canvas id="matrixRain"></canvas>
 
-<div class="container" id="container">
-  <div class="eyebrow">Walid's Counter</div>
-  <div class="title">Something new is coming.</div>
+<div class="frame">
+  <div class="corner-tr"></div>
+  <div class="corner-bl"></div>
 
-  <div class="units">
-    <div class="unit"><div class="value" id="days">000</div><div class="label">Days</div></div>
-    <div class="unit"><div class="value" id="hours">00</div><div class="label">Hours</div></div>
-    <div class="unit"><div class="value" id="minutes">00</div><div class="label">Minutes</div></div>
-    <div class="unit"><div class="value" id="seconds">00</div><div class="label">Seconds</div></div>
+  <div class="eyebrow"><span class="dot"></span>WALID'S COUNTER<span class="dot"></span></div>
+
+  <div class="clock" id="clock">T-000:00:00:00</div>
+
+  <div class="labels">
+    <span>days</span><span>hrs</span><span>min</span><span>sec</span>
   </div>
 
-  <div class="footer" id="targetDate">Target —</div>
+  <div class="divider"></div>
+
+  <div class="meta">
+    <span id="targetDate">TARGET —</span>
+    <span id="percentDone">0% ELAPSED</span>
+  </div>
+
+  <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
 </div>
 
 <script>
+  // --- Digital rain background ---
+  const rainCanvas = document.getElementById("matrixRain");
+  const ctx = rainCanvas.getContext("2d");
+  const glyphs = "アイウエオカキクケコサシスセソタチツテトナニヌネノ0123456789";
+  let columns, drops, fontSize = 16;
+
+  function sizeRain(){
+    rainCanvas.width = window.innerWidth;
+    rainCanvas.height = window.innerHeight;
+    columns = Math.floor(rainCanvas.width / fontSize);
+    drops = new Array(columns).fill(0).map(() => Math.floor(Math.random() * -40));
+  }
+  sizeRain();
+  window.addEventListener("resize", sizeRain);
+
+  function drawRain(){
+    ctx.fillStyle = "rgba(0, 0, 0, 0.06)";
+    ctx.fillRect(0, 0, rainCanvas.width, rainCanvas.height);
+    ctx.font = fontSize + "px 'Space Mono', monospace";
+
+    for (let i = 0; i < columns; i++){
+      const glyph = glyphs[Math.floor(Math.random() * glyphs.length)];
+      const x = i * fontSize;
+      const y = drops[i] * fontSize;
+
+      ctx.fillStyle = "#c8ffc0"; // bright leading glyph
+      ctx.fillText(glyph, x, y);
+      ctx.fillStyle = "rgba(57, 255, 20, 0.55)"; // trailing green
+      ctx.fillText(glyph, x, y - fontSize);
+
+      if (y > rainCanvas.height && Math.random() > 0.975){
+        drops[i] = 0;
+      }
+      drops[i]++;
+    }
+  }
+  setInterval(drawRain, 45);
+
   // Target launch date and time — edit this to change the countdown
   const targetDate = new Date("2026-08-03T10:00:00");
+  const startDate  = new Date("2026-07-01T00:00:00"); // reference point for the progress bar
 
   const day = String(targetDate.getDate()).padStart(2, '0');
   const month = String(targetDate.getMonth() + 1).padStart(2, '0');
   const year = targetDate.getFullYear();
-  document.getElementById("targetDate").innerText = `Target date: ${day}/${month}/${year}`;
+  document.getElementById("targetDate").innerText = `TARGET ${day}/${month}/${year}`;
 
-  const container = document.getElementById("container");
-  const daysEl = document.getElementById("days");
-  const hoursEl = document.getElementById("hours");
-  const minutesEl = document.getElementById("minutes");
-  const secondsEl = document.getElementById("seconds");
+  const clockEl = document.getElementById("clock");
+  const fillEl = document.getElementById("progressFill");
+  const percentEl = document.getElementById("percentDone");
 
   function updateCountdown(){
     const now = new Date();
     let diff = targetDate - now;
 
     if (diff <= 0){
-      container.classList.add("launched");
-      daysEl.innerText = "000";
-      hoursEl.innerText = "00";
-      minutesEl.innerText = "00";
-      secondsEl.innerText = "00";
-      document.querySelector(".title").innerText = "It's here.";
+      clockEl.classList.add("launched");
+      clockEl.innerHTML = "T+000:00:00:00";
+      fillEl.style.width = "100%";
+      percentEl.innerText = "LAUNCHED";
       return;
     }
 
@@ -213,10 +277,17 @@
     diff %= (1000 * 60);
     const seconds = Math.floor(diff / 1000);
 
-    daysEl.innerText = String(days).padStart(3, '0');
-    hoursEl.innerText = String(hours).padStart(2, '0');
-    minutesEl.innerText = String(minutes).padStart(2, '0');
-    secondsEl.innerText = String(seconds).padStart(2, '0');
+    clockEl.innerHTML =
+      `T-${String(days).padStart(3, '0')}<span class="unit-sep">:</span>` +
+      `${String(hours).padStart(2, '0')}<span class="unit-sep">:</span>` +
+      `${String(minutes).padStart(2, '0')}<span class="unit-sep">:</span>` +
+      `${String(seconds).padStart(2, '0')}`;
+
+    const total = targetDate - startDate;
+    const elapsed = now - startDate;
+    const pct = Math.min(100, Math.max(0, (elapsed / total) * 100));
+    fillEl.style.width = pct.toFixed(2) + "%";
+    percentEl.innerText = pct.toFixed(1) + "% ELAPSED";
   }
 
   updateCountdown();
