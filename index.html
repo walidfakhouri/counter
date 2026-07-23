@@ -42,16 +42,6 @@
     display: block;
   }
 
-  /* vignette to keep the frame readable over the rain */
-  body::after{
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(ellipse at center, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.92) 100%);
-    pointer-events: none;
-    z-index: 0;
-  }
-
   .frame{
     position: relative;
     z-index: 1;
@@ -225,6 +215,8 @@
   sizeRain();
   window.addEventListener("resize", sizeRain);
 
+  let goldenColumn = -1;
+
   function drawRain(){
     ctx.fillStyle = "rgba(0, 0, 0, 0.06)";
     ctx.fillRect(0, 0, rainCanvas.width, rainCanvas.height);
@@ -235,9 +227,15 @@
       const x = i * fontSize;
       const y = drops[i] * fontSize;
 
-      ctx.fillStyle = "#c8ffc0"; // bright leading glyph
+      const isGolden = (i === goldenColumn);
+
+      ctx.shadowColor = isGolden ? "#ffd700" : "#ffffff";
+      ctx.shadowBlur = isGolden ? 8 : 6;
+      ctx.fillStyle = isGolden ? "#ffd700" : "#ffffff"; // leading glyph
       ctx.fillText(glyph, x, y);
-      ctx.fillStyle = "rgba(57, 255, 20, 0.55)"; // trailing green
+      ctx.shadowBlur = 0; // reset so trailing glyph stays sharp
+
+      ctx.fillStyle = isGolden ? "rgba(255, 215, 0, 0.55)" : "rgba(57, 255, 20, 0.55)"; // trailing
       ctx.fillText(glyph, x, y - fontSize);
 
       if (y > rainCanvas.height && Math.random() > 0.975){
@@ -247,6 +245,11 @@
     }
   }
   setInterval(drawRain, 45);
+
+  // Every few seconds, one column's falling character turns golden
+  setInterval(() => {
+    goldenColumn = Math.floor(Math.random() * columns);
+  }, 4000);
 
   // Target launch date and time — edit this to change the countdown
   const targetDate = new Date("2026-08-03T10:00:00");
