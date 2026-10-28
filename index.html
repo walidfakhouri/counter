@@ -204,7 +204,7 @@
 <script>
   // Start and target — edit these to change the countdown
   const startDate  = new Date("2026-10-23T00:00:00");
-  const targetDate = new Date("2027-10-23T16:00:00");
+  const targetDate = new Date("2027-10-23T00:00:00");
 
   const DAY = 86400000, HOUR = 3600000, MIN = 60000;
   const pad = (n, l = 2) => String(n).padStart(l, "0");
@@ -216,7 +216,7 @@
     `${targetDate.getDate()} ${months[targetDate.getMonth()]} ${targetDate.getFullYear()}`;
 
   const startKey = dateKey(startDate);
-  const endKey = dateKey(targetDate);
+  const endKey = dateKey(new Date(targetDate - 1)); // last full day before the target moment
 
   // Build one row per month, one dot per calendar day
   const grid = document.getElementById("grid");
