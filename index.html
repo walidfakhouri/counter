@@ -231,7 +231,7 @@
     position: fixed;
     top: 18px;
     right: 18px;
-    z-index: 6;
+    z-index: 21;                                    /* stays usable above the final-minute overlay */
     width: 44px;
     height: 44px;
     display: grid;
@@ -252,6 +252,122 @@
   .sound[data-mode="all"]{ color: var(--amber); border-color: var(--amber); box-shadow: 0 0 12px var(--glow); }
   .sound[data-mode="quiet"]{ color: var(--amber); }
 
+  /* ---------- "Today is the day" banner over the counters ---------- */
+  .days-row{ display: flex; }
+  .today-banner{
+    position: fixed;
+    inset: 0;
+    z-index: 15;
+    display: none;
+    place-items: center;
+    padding: 16px;
+    pointer-events: none;                            /* counters and buttons stay usable underneath */
+    background: radial-gradient(ellipse at center, rgba(0,0,0,0.78) 0%, rgba(0,0,0,0.45) 55%, rgba(0,0,0,0.1) 100%);
+  }
+  body.arrived .today-banner{ display: grid; animation: msgIn 1.4s ease-out both; }
+  .today-banner span{
+    font-size: clamp(54px, 10vw, 168px);
+    font-weight: 700;
+    line-height: 0.95;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    text-align: center;
+    color: #fff;
+    text-shadow: 0 0 24px var(--glow), 0 0 70px var(--glow), 0 4px 30px rgba(0,0,0,0.9);
+  }
+  @keyframes msgIn{ from{ opacity: 0; transform: scale(1.08); } to{ opacity: 1; transform: none; } }
+
+  /* ---------- Final-minute overlay ---------- */
+  .final{
+    position: fixed;
+    inset: 0;
+    z-index: 20;
+    display: grid;
+    place-items: center;
+    background: rgba(0,0,0,0.94);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .9s ease;
+  }
+  .final.show{ opacity: 1; pointer-events: auto; }
+  .final::before{                                   /* red pulse that grows in the last seconds */
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at center, rgba(255,40,30,0.0) 30%, rgba(255,40,30,0.28) 100%);
+    opacity: 0;
+    transition: opacity .6s;
+  }
+  .final[data-phase="tense"]::before{ opacity: .35; }
+  .final[data-phase="critical"]::before{ opacity: 1; animation: alarm 1s ease-in-out infinite; }
+  .final[data-phase="zero"]::before{ opacity: 0; }
+  @keyframes alarm{ 0%,100%{ opacity: .45; } 50%{ opacity: 1; } }
+  .final-inner{ position: relative; display: flex; flex-direction: column; align-items: center; gap: 3vh; text-align: center; padding: 16px; }
+  .final-label{
+    font-size: clamp(16px, 2.2vw, 26px);
+    font-weight: 700;
+    letter-spacing: 0.4em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .final[data-phase="critical"] .final-label{ color: #ff5a4e; }
+  .final-digits{ font-size: min(46vw, 56vh); }
+  .final[data-phase="critical"] .final-digits{ --amber: #ff3b30; --glow: rgba(255,59,48,0.6); }
+  .final-digits.beat{ animation: beat .5s ease-out; }
+  @keyframes beat{ 0%{ transform: scale(1.06); } 100%{ transform: scale(1); } }
+  .final-bar{ width: min(70vw, 720px); height: 4px; background: rgba(255,255,255,0.1); }
+  .final-bar i{ display: block; height: 100%; width: 100%; background: var(--amber); box-shadow: 0 0 12px var(--glow); transition: width .25s linear; }
+  .final[data-phase="critical"] .final-bar i{ background: #ff3b30; }
+  .final-reached{
+    display: none;
+    font-size: clamp(34px, 7vw, 96px);
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #fff;
+    text-shadow: 0 0 30px var(--glow), 0 0 80px var(--glow);
+  }
+  .final[data-phase="zero"] .final-reached{ display: block; animation: reached 1.4s ease-out both; }
+  .final[data-phase="zero"] .final-digits, .final[data-phase="zero"] .final-bar{ display: none; }
+  @keyframes reached{ 0%{ opacity: 0; transform: scale(1.4); filter: blur(8px); } 100%{ opacity: 1; transform: none; filter: none; } }
+  .final-flash{ position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; }
+  .final[data-phase="zero"] .final-flash{ animation: whiteout 1.6s ease-out; }
+  @keyframes whiteout{ 0%{ opacity: .9; } 100%{ opacity: 0; } }
+  .final-controls{ display: none; gap: 10px; margin-top: 2vh; flex-wrap: wrap; justify-content: center; }
+  body.previewing .final-controls{ display: flex; }
+  .final-controls button, .preview-note button{
+    min-height: 44px;
+    padding: 0 18px;
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--text);
+    font: 600 14px/1 'Rajdhani', sans-serif;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+  .final-controls button:hover, .preview-note button:hover{ border-color: var(--amber); color: var(--amber); }
+
+  /* Banner shown on the zero screen during a preview */
+  .preview-note{
+    position: fixed;
+    left: 50%;
+    bottom: 18px;
+    transform: translateX(-50%);
+    z-index: 16;
+    display: none;
+    align-items: center;
+    gap: 14px;
+    padding: 8px 8px 8px 16px;
+    background: rgba(0,0,0,0.9);
+    border: 1px solid var(--amber);
+    font: 600 13px/1.2 'JetBrains Mono', monospace;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--amber);
+  }
+  body.previewing.arrived .preview-note{ display: flex; }
+
   @media (max-width: 900px){
     body{ padding-top: 80px; place-items: start center; }
     .screen{ grid-template-columns: minmax(0, 1fr); }
@@ -266,11 +382,30 @@
   }
 
   @media (prefers-reduced-motion: reduce){
-    .panel, .sq.today, .live i{ animation: none; }
+    .panel, .sq.today, .live i, .final::before, .final-digits.beat, .final-reached, .final-flash{ animation: none !important; }
   }
 </style>
 </head>
 <body>
+
+<!-- Final-minute overlay -->
+<div class="final" id="finalOverlay" data-phase="calm" role="dialog" aria-modal="false" aria-label="Final minute countdown" aria-hidden="true">
+  <div class="final-flash"></div>
+  <div class="final-inner">
+    <div class="final-label" id="finalLabel">Final minute</div>
+    <div class="seg7 final-digits" id="finalDigits" role="img" aria-label="Seconds remaining"></div>
+    <div class="final-reached">Today is the day</div>
+    <div class="final-bar"><i id="finalBar"></i></div>
+    <div class="final-controls">
+      <button type="button" id="skipBtn">Skip to last 10 s</button>
+      <button type="button" id="exitBtn">Exit preview</button>
+    </div>
+  </div>
+</div>
+
+<div class="today-banner" id="todayBanner" role="status"><span>Today is<br>the day</span></div>
+
+<div class="preview-note" id="previewNote">Preview · returning to the live countdown <button type="button" id="exitBtn2">Exit now</button></div>
 
 <button class="sound" id="soundBtn" type="button" data-mode="all">
   <!-- all sound on -->
@@ -291,7 +426,9 @@
     </div>
 
     <div class="days-wrap">
-      <div class="seg7 days" id="daysDisplay" role="img" aria-label="Days remaining"></div>
+      <div class="days-row">
+        <div class="seg7 days" id="daysDisplay" role="img" aria-label="Days remaining"></div>
+      </div>
       <div class="caption" id="daysLabel"><b>Days</b> to target</div>
     </div>
 
@@ -577,7 +714,7 @@
     const o = actx.createOscillator(), g = actx.createGain();
     o.frequency.setValueAtTime(from, t);
     o.frequency.exponentialRampToValueAtTime(to, t + dur * 0.55);
-    env(g, t, gain, dur, 0.005);
+    env(g, t, gain, dur, 0.02);                          // soft start: no click
     o.connect(g);
     out(g);
     const sub = actx.createOscillator(), sg = actx.createGain();
@@ -586,7 +723,6 @@
     sub.connect(sg).connect(master);
     o.start(t); sub.start(t);
     o.stop(t + dur + 0.05); sub.stop(t + dur * 1.3 + 0.05);
-    click(start, gain * 0.12, 0.03, 1500);
   }
 
   // Sonar: low sine that drifts down, with a quiet overtone; mostly reverb
@@ -627,7 +763,7 @@
     lp.frequency.setValueAtTime(1400, t);
     lp.frequency.exponentialRampToValueAtTime(300, t + dur);
     lp.Q.value = 2;
-    env(g, t, gain, dur, 0.004);
+    env(g, t, gain, dur, 0.012);                          // smooth start: no click
     car.connect(lp).connect(g);
     out(g, 0.85);
     const sub = actx.createOscillator(), sg = actx.createGain();
@@ -694,25 +830,38 @@
 
   // Noise riser: band-passed noise sweeping upward and getting louder
   function riser(start, dur, gain = 0.25){
+    // Smooth swell: low tones gliding up an octave, plus a soft, rounded air layer (no crackle, no hard stop)
     const t = actx.currentTime + start;
-    const len = Math.floor(actx.sampleRate * dur);
-    const buf = actx.createBuffer(1, len, actx.sampleRate);
-    const d = buf.getChannelData(0);
-    for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
-    const src = actx.createBufferSource();
-    src.buffer = buf;
-    const bp = actx.createBiquadFilter();
-    bp.type = "bandpass";
-    bp.Q.value = 1.2;
-    bp.frequency.setValueAtTime(150, t);
-    bp.frequency.exponentialRampToValueAtTime(2600, t + dur);
+    const fadeOut = Math.min(0.25, dur * 0.2);
     const g = actx.createGain();
-    g.gain.setValueAtTime(0.0001, t);
-    g.gain.exponentialRampToValueAtTime(gain, t + dur * 0.97);
-    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-    src.connect(bp).connect(g);
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(gain * 0.5, t + dur - fadeOut);
+    g.gain.linearRampToValueAtTime(0, t + dur);
+    [[55, -6], [82.4, 5], [110, 0]].forEach(([f, c]) => {
+      const o = actx.createOscillator();
+      o.type = "triangle";
+      o.frequency.setValueAtTime(f, t);
+      o.frequency.exponentialRampToValueAtTime(f * 2, t + dur);
+      o.detune.value = c;
+      o.connect(g);
+      o.start(t); o.stop(t + dur + 0.05);
+    });
+    // air: noise kept below 1.6 kHz and smoothed by two filters
+    const len = Math.floor(actx.sampleRate * dur);
+    const buf = actx.createBuffer(1, len, actx.sampleRate), d = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    const src = actx.createBufferSource(); src.buffer = buf;
+    const lp1 = actx.createBiquadFilter(), lp2 = actx.createBiquadFilter(), ag = actx.createGain();
+    lp1.type = lp2.type = "lowpass";
+    lp1.frequency.setValueAtTime(200, t); lp1.frequency.exponentialRampToValueAtTime(1600, t + dur);
+    lp2.frequency.setValueAtTime(200, t); lp2.frequency.exponentialRampToValueAtTime(1600, t + dur);
+    ag.gain.setValueAtTime(0, t);
+    ag.gain.linearRampToValueAtTime(gain * 0.6, t + dur - fadeOut);
+    ag.gain.linearRampToValueAtTime(0, t + dur);
+    src.connect(lp1).connect(lp2).connect(ag);
     out(g, 0.8);
-    src.start(t);
+    out(ag, 0.8);
+    src.start(t); src.stop(t + dur + 0.05);
   }
 
   // Timpani-style hit: pitched drum with a short skin noise
@@ -770,22 +919,18 @@
   const SOUNDS = {
     second(){ sonar(196, 0, 0.003, 0.8, 0.15); },            // the soft blip (G3), fades in and out
     minute(){ sonar(146.83, 0, 0.3, 2.8); },                 // single deep ping (D3)
-    hour(){                                                  // one deep metallic clang + sub boom
-      clang(98, 0, 2.4, 0.26);
-      thud(0, 0.85, 2.0, 65, 22);
+    hour(){                                                  // two pings falling: D3… then a deep G2
+      sonar(146.83, 0, 0.34, 2.6);
+      sonar(98, 0.9, 0.42, 4.2);
     },
-    day(){                                                   // METAL ONLY: three falling clangs, each heavier, then a deep drum
-      tone(55, 0, 5.0, { type: "triangle", gain: 0.18, attack: 0.3 });
-      tone(36.7, 0.5, 4.5, { type: "triangle", gain: 0.16, attack: 0.8 });
-      clang(110, 0, 1.6, 0.24);
-      thud(0, 0.75, 1.2, 70, 26);
-      clang(82.41, 0.6, 1.8, 0.27);
-      thud(0.6, 0.85, 1.5, 65, 22);
-      clang(55, 1.2, 4.0, 0.32);                             // the big one
-      clang(110, 1.2, 2.4, 0.14);
-      clang(220, 1.2, 1.2, 0.06);
-      thud(1.2, 1.0, 3.0, 60, 16);
-      timp(36.7, 2.6, 0.9, 2.6);
+    day(){                                                   // three falling pings over a low hum; the last lands with a soft clang and a deep drum
+      tone(49, 0, 5.5, { type: "triangle", gain: 0.16, attack: 0.8 });
+      sonar(220, 0, 0.3, 2.4);
+      sonar(146.83, 0.75, 0.36, 2.8);
+      sonar(98, 1.5, 0.46, 4.6);
+      clang(98, 1.5, 3.2, 0.16);
+      thud(1.5, 0.75, 2.4, 70, 22);
+      timp(36.7, 2.6, 0.6, 2.4);
     },
     week(){                                                  // riser → hit with a big low chord → two drum hits
       riser(0, 1.6, 0.22);
@@ -866,9 +1011,41 @@
     }
   };
 
+  /* ---------- Final minute: sounds that intensify toward zero ---------- */
+  // A low pulse that throbs faster and grows louder for the whole final minute
+  function startFinalDrone(secsLeft){
+    pulseDrone(36.7, 0, secsLeft, 0.3, 1.2);
+    if (secsLeft > 30) pulseDrone(55, secsLeft - 30, 30, 0.2, 2);
+    else pulseDrone(55, 0, secsLeft, 0.2, 2);
+  }
+  // One beat per second; it grows in four stages
+  function finalTick(sec){
+    if (actx && master){                             // whole mix rises from calm to loud across the minute
+      master.gain.cancelScheduledValues(actx.currentTime);
+      master.gain.setTargetAtTime(0.55 + 0.5 * (60 - sec) / 59, actx.currentTime, 0.1);
+    }
+    if (sec > 30){                                   // 60–31: a single ping, slowly louder
+      sonar(146.83, 0, 0.12 + (60 - sec) * 0.005, 1.3);
+    } else if (sec > 10){                            // 30–11: ping + a deep drum
+      sonar(146.83, 0, 0.27, 1.3);
+      thud(0, 0.3 + (30 - sec) * 0.018, 0.55, 70, 34);
+    } else if (sec > 3){                             // 10–4: lower ping, metal hit, double heartbeat
+      sonar(110, 0, 0.34, 1.4);
+      clang(98, 0, 1.2, 0.14 + (10 - sec) * 0.012);
+      thud(0, 0.7, 0.7, 75, 30);
+      thud(0.45, 0.4, 0.4, 70, 40);
+    } else {                                         // 3, 2, 1: the heaviest hits, with a swell into zero
+      sonar(98, 0, 0.42, 1.6);
+      clang(73.42, 0, 1.6, 0.24);
+      thud(0, 0.95, 1.0, 80, 24);
+      timp(36.7, 0, 0.8, 1.5);
+      if (sec === 3) riser(0, 3, 0.4);
+    }
+  }
+
   // Volume ladder: each bigger unit plays louder, then the mix settles back
-  const LEVEL = { second: 0.55, minute: 0.55, hour: 0.55, day: 0.55, week: 0.9, month: 1.05, launch: 1.45 };
-  const LENGTH = { hour: 3.5, day: 6, week: 7, month: 10.5, launch: 21 };
+  const LEVEL = { second: 0.55, minute: 0.55, hour: 0.45, day: 0.48, week: 0.9, month: 1.05, launch: 1.45 };
+  const LENGTH = { hour: 5.5, day: 6.5, week: 7, month: 10.5, launch: 21 };
   let boostUntil = 0;
 
   function play(unit){
@@ -908,11 +1085,15 @@
   });
 
   // Browsers only allow sound after the first interaction, so unlock audio on the first click, tap or key
+  // (On iPhone only a finished tap counts, so touchend and click are included.)
+  const UNLOCK = ["pointerdown", "pointerup", "touchend", "click", "keydown"];
   function unlock(){
     ensureAudio();
-    ["pointerdown", "keydown", "touchstart"].forEach(ev => window.removeEventListener(ev, unlock));
+    UNLOCK.forEach(ev => window.removeEventListener(ev, unlock, true));
+    if (pendingLaunch) playLaunchNow();               // page opened after the date: play the launch now
   }
-  ["pointerdown", "keydown", "touchstart"].forEach(ev => window.addEventListener(ev, unlock));
+  UNLOCK.forEach(ev => window.addEventListener(ev, unlock, true));
+  let pendingLaunch = false;
 
   const shouldPlay = (unit) => mode === "all" || (mode === "quiet" && unit !== "second");
 
@@ -936,6 +1117,7 @@
 
   // Play only the biggest unit that just completed
   function announce(b, totalDaysLeft, launched){
+    if (inFinal || launched){ prev = { ...b, days: totalDaysLeft }; wasLaunched = launched; return; }   // the final sequence has its own sounds
     if (prev && document.visibilityState === "visible"){
       let unit = null;
       if (launched && wasLaunched === false) unit = "launch";
@@ -981,38 +1163,155 @@
     });
   });
 
+  /* ---------------- Clock (real time, or simulated during a preview) ---------------- */
+  let simOffset = 0, previewing = false;
+  const nowTime = () => new Date(Date.now() + simOffset);
+
+  /* ---------------- Final minute + zero ---------------- */
+  const overlay = document.getElementById("finalOverlay");
+  const finalLabel = document.getElementById("finalLabel");
+  const finalBar = document.getElementById("finalBar");
+  const finalDigitsEl = document.getElementById("finalDigits");
+  const finalDigits = makeDisplay(finalDigitsEl, "00");
+
+  let inFinal = false;          // overlay currently running
+  let droneOn = false;          // final-minute pulse scheduled
+  let lastSec = null;           // last whole second shown in the overlay
+  let zeroAt = null;            // time the overlay hit zero
+  let launchDone = false;       // launch already played for this run
+  let previewEndTimer = null;
+
+  const finalAudible = () => previewing || mode !== "off";
+
+  function playLaunchNow(){
+    pendingLaunch = false;
+    if (!actx || !finalAudible()) return;
+    launchDone = true;
+    play("launch");
+  }
+
+  function showOverlay(){
+    inFinal = true;
+    overlay.classList.add("show");
+    overlay.setAttribute("aria-hidden", "false");
+  }
+  function hideOverlay(){
+    inFinal = false;
+    overlay.classList.remove("show");
+    overlay.setAttribute("aria-hidden", "true");
+  }
+
+  function runFinal(now, diff){
+    // Last 60 seconds: overlay with a whole-second countdown (60 … 1)
+    if (diff > 0 && diff <= 60000){
+      if (!inFinal){ overlay.dataset.phase = "calm"; showOverlay(); lastSec = null; droneOn = false; zeroAt = null; launchDone = false; }
+      const sec = Math.ceil(diff / 1000);
+      overlay.dataset.phase = sec > 30 ? "calm" : sec > 10 ? "tense" : "critical";
+      finalLabel.textContent = sec > 10 ? "Final minute" : "Final seconds";
+      finalBar.style.width = (diff / 600) + "%";
+      if (sec !== lastSec){
+        finalDigits.set(pad(sec));
+        finalDigitsEl.classList.remove("beat"); void finalDigitsEl.offsetWidth; finalDigitsEl.classList.add("beat");
+        if (actx && finalAudible()){
+          if (!droneOn){ startFinalDrone(diff / 1000); droneOn = true; }
+          finalTick(sec);
+        }
+        lastSec = sec;
+      }
+      return;
+    }
+    // Zero: launch sound, "Target reached", then the overlay fades after 10 s
+    if (diff <= 0 && inFinal){
+      if (zeroAt === null){
+        zeroAt = now.getTime();
+        overlay.dataset.phase = "zero";
+        finalLabel.textContent = "";
+        if (actx && finalAudible() && !launchDone){
+          if (document.visibilityState === "visible") playLaunchNow(); else pendingLaunch = true;
+        } else if (!actx) pendingLaunch = true;
+      }
+      if (now.getTime() - zeroAt >= 10000){
+        hideOverlay();
+        if (previewing && !previewEndTimer) previewEndTimer = setTimeout(exitPreview, 9000);   // preview: show the final screen, then return
+      }
+    }
+  }
+
+  /* ---------------- Preview ---------------- */
+  function resetAudio(){
+    // Stop everything that is playing by starting a fresh audio engine
+    if (actx){ try { actx.close(); } catch (e) {} }
+    actx = null; master = null; verb = null;
+    ensureAudio();
+  }
+  function startPreview(secs = 60.4){
+    if (!previewing && targetDate - Date.now() <= 60000) return;      // the real thing is happening
+    previewing = true;
+    document.body.classList.add("previewing");
+    clearTimeout(previewEndTimer); previewEndTimer = null;
+    hideOverlay();
+    resetAudio();
+    simOffset = targetDate.getTime() - Date.now() - secs * 1000;
+    prev = null;
+    update();
+  }
+  function exitPreview(){
+    clearTimeout(previewEndTimer); previewEndTimer = null;
+    previewing = false;
+    simOffset = 0;
+    document.body.classList.remove("previewing");
+    hideOverlay();
+    resetAudio();
+    prev = null; lastKey = null;
+    update();
+  }
+  document.getElementById("skipBtn").addEventListener("click", () => { startPreview(10.4); });
+  document.getElementById("exitBtn").addEventListener("click", exitPreview);
+  document.getElementById("exitBtn2").addEventListener("click", exitPreview);
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && previewing) exitPreview(); });
+
+  // Came back to the tab after zero passed in the background: play the launch then
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible" && pendingLaunch && actx) playLaunchNow();
+  });
+
   /* ---------------- Tick ---------------- */
   const daysLabel = document.getElementById("daysLabel");
   const dayCount = document.getElementById("dayCount");
   const progress = document.getElementById("progress");
   const statusFlag = document.getElementById("statusFlag");
+  const ZERO = { m: 0, w: 0, d: 0, h: 0, mi: 0, s: 0 };
+  let firstRun = true;
 
   function update(){
-    const now = new Date();
-    const launched = now >= targetDate;
-    let b, diff;
+    const now = nowTime();
+    const diff = targetDate - now;
+    const launched = diff <= 0;
+    let b, daysLeft;
 
     if (launched){
+      // At and after the target: everything reads zero and "Today is the day" shows (once the overlay has gone)
       document.body.classList.add("launched");
-      daysLabel.innerHTML = "<b>Days</b> since target";
-      statusFlag.textContent = "Target reached";
+      document.body.classList.toggle("arrived", !inFinal);
+      statusFlag.textContent = "Today is the day";
       progress.textContent = "100%";
       dayCount.textContent = `Day ${totalDays} / ${totalDays}`;
       paintGrid(null, true);
-      diff = now - targetDate;                      // count up since target
-      b = breakdown(targetDate, now);
+      b = ZERO; daysLeft = 0;
+      if (firstRun && !previewing){ pendingLaunch = true; if (actx) playLaunchNow(); }   // opened after the date
     } else {
+      document.body.classList.remove("launched", "arrived");
+      statusFlag.textContent = previewing ? "Preview" : "Countdown active";
       const todayKey = dateKey(now);
       paintGrid(todayKey, false);
       const dayNum = Math.max(dots.findIndex(x => x.key === todayKey) + 1, 0);
       dayCount.textContent = `Day ${pad(dayNum, 3)} / ${totalDays}`;
       const pct = Math.max(0, Math.min(100, (now - startDate) / (targetDate - startDate) * 100));
       progress.textContent = pct.toFixed(1) + "%";
-      diff = targetDate - now;
       b = breakdown(now, targetDate);
+      daysLeft = Math.floor(diff / DAY);
     }
 
-    const daysLeft = Math.floor(diff / DAY);
     disp.days.set(pad(daysLeft, 3));
     disp.mo.set(pad(b.m));
     disp.wk.set(pad(b.w));
@@ -1022,11 +1321,14 @@
     disp.se.set(pad(b.s));
     disp.clock.set(`${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`);
 
+    runFinal(now, diff);
+    if (launched) document.body.classList.toggle("arrived", !inFinal);
     announce(b, daysLeft, launched);
+    firstRun = false;
   }
 
   update();
-  setInterval(update, 1000);
+  setInterval(update, 200);                           // 5× a second so the final countdown lands exactly on each second
 </script>
 
 </body>
