@@ -6,18 +6,31 @@
 <title>Walid's Counter</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <style>
   :root{
     --bg: #f4f5f7;
     --ink: #0e0e10;
-    --muted: #55565c;
-    --soft: #9a9ba1;
-    --empty: #d9dadf;
     --accent: #d12a20;
+    --glow: rgba(209,42,32,0.45);
+    --glow-soft: rgba(209,42,32,0.18);
+    --text: #0e0e10;
+    --label: #0e0e10;
+    --muted: #55565c;
+    --todo: #d9dadf;
+    --out: #e7e8eb;
+    --head: #d12a20;          /* today's dot */
+    --rain-head: #0e0e10;     /* leading glyph of each rain column */
+    --rain-tail: #d12a20;     /* trailing glyph */
   }
   /* Gold once launched */
-  body.launched{ --accent: #b8860b; }
+  body.launched{
+    --accent: #b8860b;
+    --glow: rgba(184,134,11,0.45);
+    --glow-soft: rgba(184,134,11,0.2);
+    --head: #b8860b;
+    --rain-tail: #b8860b;
+  }
 
   *{ box-sizing: border-box; }
 
@@ -28,67 +41,108 @@
   }
 
   body{
+    position: relative;
     min-height: 100vh;
     display: grid;
     place-items: center;
-    font-family: 'Manrope', system-ui, sans-serif;
-    color: var(--ink);
-    -webkit-font-smoothing: antialiased;
     padding: 32px 16px;
+    overflow-x: hidden;
+    color: var(--text);
+    font-family: 'Manrope', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ---------- Code rain ---------- */
+  #rain{
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+    z-index: 0;
   }
 
   .wrap{
+    position: relative;
+    z-index: 1;
     width: min(1180px, 100%);
     display: flex;
     gap: clamp(32px, 6vw, 72px);
     align-items: center;
   }
 
+  /* One soft vignette dims the rain in the middle so the numbers stay readable */
+  .veil{
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background: radial-gradient(ellipse 75% 70% at 50% 50%, rgba(244,245,247,0.9) 0%, rgba(244,245,247,0.7) 55%, rgba(244,245,247,0.25) 100%);
+  }
+
   /* ---------- Left: numbers ---------- */
   .info{
-    flex: 0 0 clamp(300px, 34vw, 420px);
+    flex: 0 0 clamp(320px, 38vw, 470px);
     display: flex;
     flex-direction: column;
-    gap: 28px;
+    gap: 26px;
   }
 
   .eyebrow{
+    font-family: 'JetBrains Mono', monospace;
     font-size: 14px;
-    font-weight: 500;
     letter-spacing: 0.24em;
     text-transform: uppercase;
     color: var(--muted);
   }
 
   .days{
-    font-weight: 300;
-    font-size: clamp(96px, 13vw, 168px);
-    line-height: 0.9;
+    font-weight: 800;
+    font-size: clamp(110px, 15vw, 196px);
+    line-height: 0.85;
     letter-spacing: -0.05em;
     font-variant-numeric: tabular-nums;
     color: var(--accent);
-    transition: color 1s ease;
+    transition: color 1.5s ease;
   }
   .days-label{
-    margin-top: 6px;
+    margin-top: 10px;
     font-size: 18px;
     font-weight: 500;
     color: var(--muted);
   }
 
-  .hms{
-    font-weight: 500;
-    font-size: clamp(28px, 3vw, 36px);
-    letter-spacing: 0.02em;
+  /* months · weeks · days · hours · minutes · seconds */
+  .breakdown{
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 10px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .unit{
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .unit .n{
+    font-size: clamp(24px, 2.6vw, 32px);
+    font-weight: 700;
+    line-height: 1;
     font-variant-numeric: tabular-nums;
   }
-  .hms .sep{ color: var(--soft); }
+  .unit .l{
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .unit.sec .n{ color: var(--accent); }
 
   .meta{
     display: flex;
     gap: 32px;
     padding-top: 20px;
-    border-top: 2px solid var(--ink);
+    border-top: 4px solid var(--ink);
   }
   .meta div{ display: flex; flex-direction: column; gap: 6px; }
   .meta .k{
@@ -112,32 +166,36 @@
   .grid{
     display: grid;
     grid-template-columns: 52px repeat(31, minmax(0, 1fr));
-    gap: 5px;
+    gap: 4px;
     align-items: center;
   }
 
   .month{
+    font-family: 'JetBrains Mono', monospace;
     font-size: 12px;
-    font-weight: 500;
-    color: var(--muted);
     white-space: nowrap;
+    color: var(--label);
   }
-  .month b{ font-weight: 700; color: var(--ink); }
+  .month span{ color: var(--muted); }
 
-  .dot{
+  .cell{
     aspect-ratio: 1;
-    border-radius: 50%;
-    background: var(--empty);
-    transition: background 0.6s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
-  .dot.out{
-    background: transparent;
-    box-shadow: inset 0 0 0 1px var(--empty);
+  .dot{ border-radius: 50%; transition: all 0.6s ease; }
+  .dot.out{ width: 3px; height: 3px; background: var(--out); }
+  .dot.todo{ width: 5px; height: 5px; background: var(--todo); }
+  .dot.done{
+    width: 72%; height: 72%;
+    background: var(--bg);
+    box-shadow: inset 0 0 0 2px var(--ink);
   }
-  .dot.done{ background: var(--ink); }
   .dot.today{
-    background: var(--accent);
-    box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent);
+    width: 80%; height: 80%;
+    background: var(--head);
+    box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--head), 0 0 16px 4px var(--glow);
     animation: beat 2.4s ease-in-out infinite;
   }
   @keyframes beat{
@@ -151,15 +209,52 @@
     gap: 12px 24px;
     font-size: 13px;
     color: var(--muted);
-    padding-left: 57px;
+    padding-left: 56px;
   }
   .legend span{ display: flex; align-items: center; gap: 8px; }
   .legend i{ width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
 
+  /* ---------- Sound toggle ---------- */
+  .sound{
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    height: 44px;
+    padding: 0 16px 0 12px;
+    border-radius: 999px;
+    border: 1px solid var(--todo);
+    background: rgba(244,245,247,0.9);
+    color: var(--muted);
+    font: 500 12px/1 'JetBrains Mono', monospace;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: color .3s, border-color .3s, box-shadow .3s;
+  }
+  .sound:hover{ color: var(--label); border-color: var(--muted); }
+  .sound svg{ width: 20px; height: 20px; }
+  .sound .on{ display: none; }
+  .sound[aria-pressed="true"]{ color: var(--accent); border-color: var(--accent); box-shadow: 0 0 12px var(--glow-soft); }
+  .sound[aria-pressed="true"] .on{ display: block; }
+  .sound[aria-pressed="true"] .off{ display: none; }
+
+  /* Unit flash when it completes */
+  .unit.flash .n{ animation: flash 0.9s ease-out; }
+  @keyframes flash{
+    0%{ color: var(--accent); transform: scale(1.18); }
+    100%{ transform: scale(1); }
+  }
+  .unit .n{ display: inline-block; transform-origin: left center; }
+
   @media (max-width: 820px){
     .wrap{ flex-direction: column; align-items: stretch; }
     .info{ flex: none; }
-    .grid{ grid-template-columns: 40px repeat(31, minmax(0, 1fr)); gap: 3px; }
+    .breakdown{ grid-template-columns: repeat(3, minmax(0, 1fr)); row-gap: 18px; }
+    .grid{ grid-template-columns: 40px repeat(31, minmax(0, 1fr)); gap: 2px; }
     .month{ font-size: 10px; }
     .legend{ padding-left: 0; }
   }
@@ -171,6 +266,15 @@
 </head>
 <body>
 
+<canvas id="rain" aria-hidden="true"></canvas>
+<div class="veil" aria-hidden="true"></div>
+
+<button class="sound" id="soundBtn" type="button" aria-pressed="false" aria-label="Turn sound on">
+  <svg class="off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="m22 9-6 6M16 9l6 6"/></svg>
+  <svg class="on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg>
+  <span id="soundLabel">Sound off</span>
+</button>
+
 <main class="wrap">
   <section class="info">
     <div class="eyebrow">Walid's Counter</div>
@@ -180,8 +284,13 @@
       <div class="days-label" id="daysLabel">days to go</div>
     </div>
 
-    <div class="hms">
-      <span id="h">00</span><span class="sep">:</span><span id="m">00</span><span class="sep">:</span><span id="s">00</span>
+    <div class="breakdown" aria-label="Time remaining">
+      <div class="unit" id="uMo"><span class="n" id="bMo">00</span><span class="l">Months</span></div>
+      <div class="unit" id="uWk"><span class="n" id="bWk">0</span><span class="l">Weeks</span></div>
+      <div class="unit" id="uDy"><span class="n" id="bDy">0</span><span class="l">Days</span></div>
+      <div class="unit" id="uHr"><span class="n" id="bHr">00</span><span class="l">Hours</span></div>
+      <div class="unit" id="uMi"><span class="n" id="bMi">00</span><span class="l">Min</span></div>
+      <div class="unit sec" id="uSe"><span class="n" id="bSe">00</span><span class="l">Sec</span></div>
     </div>
 
     <div class="meta">
@@ -193,10 +302,9 @@
   <section class="board">
     <div class="grid" id="grid" role="img" aria-label="Days elapsed"></div>
     <div class="legend">
-      <span><i style="background: var(--ink)"></i>Done</span>
-      <span><i style="background: var(--accent)"></i>Today</span>
-      <span><i style="background: var(--empty)"></i>To go</span>
-      <span><i style="box-shadow: inset 0 0 0 1px var(--empty)"></i>Outside range</span>
+      <span><i style="box-shadow: inset 0 0 0 2px var(--ink)"></i>Done</span>
+      <span><i style="background: var(--head); box-shadow: 0 0 8px var(--glow)"></i>Today</span>
+      <span><i style="background: var(--todo)"></i>To go</span>
     </div>
   </section>
 </main>
@@ -206,101 +314,328 @@
   const startDate  = new Date("2026-10-23T00:00:00");
   const targetDate = new Date("2027-10-23T00:00:00");
 
-  const DAY = 86400000, HOUR = 3600000, MIN = 60000;
+  const SEC = 1000, MIN = 60 * SEC, HOUR = 60 * MIN, DAY = 24 * HOUR, WEEK = 7 * DAY;
   const pad = (n, l = 2) => String(n).padStart(l, "0");
   const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-  const key = (y, m, d) => y * 10000 + m * 100 + d;          // sortable calendar-day key
+  const key = (y, m, d) => y * 10000 + m * 100 + d;
   const dateKey = (dt) => key(dt.getFullYear(), dt.getMonth(), dt.getDate());
 
+  /* ---------------- Code rain ---------------- */
+  const rain = document.getElementById("rain");
+  const ctx = rain.getContext("2d");
+  const glyphs = "アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホ0123456789";
+  const fontSize = 16;
+  let cols, drops, speeds;
+
+  function sizeRain(){
+    rain.width = window.innerWidth;
+    rain.height = window.innerHeight;
+    cols = Math.ceil(rain.width / fontSize);
+    drops = Array.from({ length: cols }, () => Math.random() * -60);
+    speeds = Array.from({ length: cols }, () => 0.35 + Math.random() * 0.65);
+  }
+  sizeRain();
+  window.addEventListener("resize", sizeRain);
+
+  function drawRain(){
+    const css = getComputedStyle(document.body);
+    const accent = css.getPropertyValue("--rain-tail").trim();
+    const head = css.getPropertyValue("--rain-head").trim();
+
+    ctx.fillStyle = "rgba(244, 245, 247, 0.09)";    // fade = trail length
+    ctx.fillRect(0, 0, rain.width, rain.height);
+    ctx.font = fontSize + "px 'JetBrains Mono', monospace";
+
+    for (let i = 0; i < cols; i++){
+      const y = Math.floor(drops[i]) * fontSize;
+      const glyph = glyphs[Math.floor(Math.random() * glyphs.length)];
+      const x = i * fontSize;
+
+      ctx.globalAlpha = 0.7;
+      ctx.fillStyle = head;                          // bright leading glyph
+      ctx.fillText(glyph, x, y);
+      ctx.globalAlpha = 0.35;
+      ctx.fillStyle = accent;                        // trailing glyph
+      ctx.fillText(glyphs[Math.floor(Math.random() * glyphs.length)], x, y - fontSize);
+      ctx.globalAlpha = 1;
+
+      if (y > rain.height && Math.random() > 0.97) drops[i] = Math.random() * -20;
+      drops[i] += speeds[i];
+    }
+  }
+
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (!reduceMotion) setInterval(drawRain, 50);
+
+  /* ---------------- Month grid ---------------- */
   document.getElementById("targetDate").textContent =
     `${targetDate.getDate()} ${months[targetDate.getMonth()]} ${targetDate.getFullYear()}`;
 
   const startKey = dateKey(startDate);
   const endKey = dateKey(new Date(targetDate - 1)); // last full day before the target moment
 
-  // Build one row per month, one dot per calendar day
   const grid = document.getElementById("grid");
-  const dots = []; // { key, el, inRange }
-  let y = startDate.getFullYear(), mo = startDate.getMonth();
-  let firstRow = true;
+  const dots = [];
+  let y = startDate.getFullYear(), mo = startDate.getMonth(), firstRow = true;
 
   while (key(y, mo, 1) <= endKey){
     const label = document.createElement("div");
     label.className = "month";
     label.innerHTML = (firstRow || mo === 0)
-      ? `<b>${months[mo]}</b> ${String(y).slice(2)}`
-      : `<b>${months[mo]}</b>`;
+      ? `${months[mo]} <span>${String(y).slice(2)}</span>`
+      : months[mo];
     grid.appendChild(label);
 
     const daysInMonth = new Date(y, mo + 1, 0).getDate();
     for (let d = 1; d <= 31; d++){
       const cell = document.createElement("div");
+      cell.className = "cell";
       if (d <= daysInMonth){
         const k = key(y, mo, d);
+        const dot = document.createElement("div");
         const inRange = k >= startKey && k <= endKey;
-        cell.className = "dot" + (inRange ? "" : " out");
-        cell.title = `${d} ${months[mo]} ${y}`;
-        if (inRange) dots.push({ key: k, el: cell });
+        dot.className = "dot " + (inRange ? "todo" : "out");
+        dot.title = `${d} ${months[mo]} ${y}`;
+        cell.appendChild(dot);
+        if (inRange) dots.push({ key: k, el: dot });
       }
-      grid.appendChild(cell); // empty cell keeps short months aligned
+      grid.appendChild(cell);
     }
-
     firstRow = false;
     mo++;
     if (mo > 11){ mo = 0; y++; }
   }
 
   const totalDays = dots.length;
-
-  const els = {
-    d: document.getElementById("d"),
-    h: document.getElementById("h"),
-    m: document.getElementById("m"),
-    s: document.getElementById("s"),
-    daysLabel: document.getElementById("daysLabel"),
-    elapsed: document.getElementById("elapsed"),
-    elapsedKey: document.getElementById("elapsedKey"),
-  };
-
-  let lastKey = -1;
+  let lastKey = null;
 
   function paintGrid(todayKey, launched){
-    if (todayKey === lastKey) return; // only repaint when the date changes
-    lastKey = todayKey;
+    const stamp = launched ? "launched" : todayKey;
+    if (stamp === lastKey) return;                  // only repaint when the date changes
+    lastKey = stamp;
     let done = 0;
     dots.forEach(({ key: k, el }) => {
       const isDone = launched || k < todayKey;
       const isToday = !launched && k === todayKey;
       if (isDone) done++;
-      el.className = "dot" + (isDone ? " done" : "") + (isToday ? " today" : "");
+      el.className = "dot " + (isDone ? "done" : isToday ? "today" : "todo");
     });
     grid.setAttribute("aria-label", `${done} of ${totalDays} days elapsed`);
-    return done;
+  }
+
+  /* ---------------- Months / weeks / days / … breakdown ---------------- */
+  function addMonths(date, n){
+    const d = new Date(date);
+    const day = d.getDate();
+    d.setDate(1);
+    d.setMonth(d.getMonth() + n);
+    const dim = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+    d.setDate(Math.min(day, dim));                  // clamp 31 Jan + 1 month to 28/29 Feb
+    return d;
+  }
+
+  function breakdown(from, to){
+    let m = 0;
+    while (addMonths(from, m + 1) <= to) m++;
+    let rest = to - addMonths(from, m);
+    const w = Math.floor(rest / WEEK); rest -= w * WEEK;
+    const d = Math.floor(rest / DAY);  rest -= d * DAY;
+    const h = Math.floor(rest / HOUR); rest -= h * HOUR;
+    const mi = Math.floor(rest / MIN); rest -= mi * MIN;
+    const s = Math.floor(rest / SEC);
+    return { m, w, d, h, mi, s };
+  }
+
+  const els = {
+    d: document.getElementById("d"),
+    daysLabel: document.getElementById("daysLabel"),
+    elapsed: document.getElementById("elapsed"),
+    elapsedKey: document.getElementById("elapsedKey"),
+    mo: document.getElementById("bMo"),
+    wk: document.getElementById("bWk"),
+    dy: document.getElementById("bDy"),
+    hr: document.getElementById("bHr"),
+    mi: document.getElementById("bMi"),
+    se: document.getElementById("bSe"),
+  };
+
+  /* ---------------- Sound ---------------- */
+  // All sounds are generated with the Web Audio API — no files needed.
+  let actx = null, master = null, soundOn = false;
+
+  function ensureAudio(){
+    if (!actx){
+      actx = new (window.AudioContext || window.webkitAudioContext)();
+      master = actx.createGain();
+      master.gain.value = 0.6;
+      master.connect(actx.destination);
+    }
+    if (actx.state === "suspended") actx.resume();
+  }
+
+  // One shaped note: frequency, start offset (s), length (s), options
+  function tone(freq, start, dur, { type = "sine", gain = 0.2, attack = 0.005, slideTo = null } = {}){
+    const t = actx.currentTime + start;
+    const o = actx.createOscillator();
+    const g = actx.createGain();
+    o.type = type;
+    o.frequency.setValueAtTime(freq, t);
+    if (slideTo) o.frequency.exponentialRampToValueAtTime(slideTo, t + dur);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(gain, t + attack);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g).connect(master);
+    o.start(t);
+    o.stop(t + dur + 0.05);
+  }
+
+  // Bell = a few inharmonic partials with long decay
+  function bell(freq, start, gain = 0.18, dur = 1.8){
+    tone(freq, start, dur, { gain });
+    tone(freq * 2.76, start, dur * 0.6, { gain: gain * 0.4 });
+    tone(freq * 5.4, start, dur * 0.35, { gain: gain * 0.2 });
+  }
+
+  const sounds = {
+    second(){                                    // soft digital tick
+      tone(2400, 0, 0.03, { type: "square", gain: 0.025 });
+      tone(1200, 0, 0.06, { gain: 0.04 });
+    },
+    minute(){                                    // two-note blip
+      tone(880, 0, 0.14, { type: "triangle", gain: 0.14 });
+      tone(1320, 0.11, 0.22, { type: "triangle", gain: 0.14 });
+    },
+    hour(){                                      // rising arpeggio + sparkle
+      [660, 880, 1320, 1760].forEach((f, i) =>
+        tone(f, i * 0.09, 0.3, { type: "triangle", gain: 0.12 }));
+      tone(3520, 0.38, 0.4, { gain: 0.04 });
+    },
+    day(){                                       // two-bell chime
+      bell(523.25, 0);
+      bell(783.99, 0.28);
+    },
+    week(){                                      // warm chord + bell
+      [392, 493.88, 587.33, 783.99].forEach(f =>
+        tone(f, 0, 2.4, { gain: 0.07, attack: 0.08 }));
+      bell(1046.5, 0.15, 0.14, 2.2);
+    },
+    month(){                                     // low swell, arpeggio, big bell
+      tone(110, 0, 2.8, { type: "triangle", gain: 0.12, attack: 0.4 });
+      tone(165, 0, 2.8, { type: "triangle", gain: 0.08, attack: 0.4 });
+      [523.25, 659.25, 783.99, 1046.5, 1318.5].forEach((f, i) =>
+        tone(f, 0.3 + i * 0.12, 0.6, { type: "triangle", gain: 0.1 }));
+      bell(1046.5, 1.0, 0.2, 2.6);
+    },
+    launch(){                                    // fanfare
+      [523.25, 659.25, 783.99, 1046.5, 783.99, 1046.5, 1318.5, 1567.98].forEach((f, i) =>
+        tone(f, i * 0.11, 0.35, { type: "sawtooth", gain: 0.05 }));
+      [523.25, 659.25, 783.99, 1046.5].forEach(f =>
+        tone(f, 0.95, 3, { type: "triangle", gain: 0.09, attack: 0.05 }));
+      bell(2093, 1.0, 0.12, 3);
+    }
+  };
+
+  const soundBtn = document.getElementById("soundBtn");
+  const soundLabel = document.getElementById("soundLabel");
+
+  function setSound(on){
+    soundOn = on;
+    soundBtn.setAttribute("aria-pressed", String(on));
+    soundBtn.setAttribute("aria-label", on ? "Turn sound off" : "Turn sound on");
+    soundLabel.textContent = on ? "Sound on" : "Sound off";
+    try { localStorage.setItem("walidCounterSound", on ? "1" : "0"); } catch (e) {}
+  }
+
+  soundBtn.addEventListener("click", () => {
+    ensureAudio();
+    setSound(!soundOn);
+    if (soundOn) sounds.minute();                 // quick confirmation blip
+  });
+
+  // Browsers block sound until a click, so a saved "on" waits for the first click anywhere
+  let wantsSound = false;
+  try { wantsSound = localStorage.getItem("walidCounterSound") === "1"; } catch (e) {}
+  if (wantsSound){
+    soundLabel.textContent = "Click to resume sound";
+    window.addEventListener("pointerdown", function resume(ev){
+      if (soundBtn.contains(ev.target)) return;    // the button handles itself
+      ensureAudio();
+      setSound(true);
+      window.removeEventListener("pointerdown", resume);
+    });
+  }
+
+  const unitEls = {
+    month: document.getElementById("uMo"),
+    week: document.getElementById("uWk"),
+    day: document.getElementById("uDy"),
+    hour: document.getElementById("uHr"),
+    minute: document.getElementById("uMi"),
+    second: document.getElementById("uSe"),
+  };
+
+  function flash(unit){
+    const el = unitEls[unit];
+    if (!el) return;
+    el.classList.remove("flash");
+    void el.offsetWidth;                          // restart the animation
+    el.classList.add("flash");
+  }
+
+  let prev = null, wasLaunched = null;
+
+  // Play only the biggest unit that just completed
+  function announce(b, totalDaysLeft, launched){
+    if (prev && document.visibilityState === "visible"){
+      let unit = null;
+      if (launched && wasLaunched === false) unit = "launch";
+      else if (b.m !== prev.m) unit = "month";
+      else if (b.w !== prev.w) unit = "week";
+      else if (totalDaysLeft !== prev.days || b.d !== prev.d) unit = "day";
+      else if (b.h !== prev.h) unit = "hour";
+      else if (b.mi !== prev.mi) unit = "minute";
+      else if (b.s !== prev.s) unit = "second";
+
+      if (unit){
+        if (unit !== "second" && unit !== "launch") flash(unit);
+        if (soundOn && actx) sounds[unit]();
+      }
+    }
+    prev = { ...b, days: totalDaysLeft };
+    wasLaunched = launched;
   }
 
   function update(){
     const now = new Date();
-    let diff = targetDate - now;
-    const launched = diff <= 0;
-    const todayKey = dateKey(now);
+    const launched = now >= targetDate;
+    let b, diff;
 
     if (launched){
       document.body.classList.add("launched");
       els.daysLabel.textContent = "days since launch";
       els.elapsedKey.textContent = "Status";
       els.elapsed.textContent = "Launched";
-      paintGrid(-2, true);
-      diff = now - targetDate; // count up since target
+      paintGrid(null, true);
+      diff = now - targetDate;                      // count up since target
+      b = breakdown(targetDate, now);
     } else {
+      const todayKey = dateKey(now);
       paintGrid(todayKey, false);
-      const dayNum = dots.findIndex(d => d.key === todayKey) + 1;
-      els.elapsed.textContent = dayNum > 0 ? `${dayNum} of ${totalDays}` : `0 of ${totalDays}`;
+      const dayNum = dots.findIndex(x => x.key === todayKey) + 1;
+      els.elapsed.textContent = `${Math.max(dayNum, 0)} of ${totalDays}`;
+      diff = targetDate - now;
+      b = breakdown(now, targetDate);
     }
 
     els.d.textContent = pad(Math.floor(diff / DAY), 3);
-    els.h.textContent = pad(Math.floor((diff % DAY) / HOUR));
-    els.m.textContent = pad(Math.floor((diff % HOUR) / MIN));
-    els.s.textContent = pad(Math.floor((diff % MIN) / 1000));
+    els.mo.textContent = pad(b.m);
+    els.wk.textContent = b.w;
+    els.dy.textContent = b.d;
+    els.hr.textContent = pad(b.h);
+    els.mi.textContent = pad(b.mi);
+    els.se.textContent = pad(b.s);
+
+    announce(b, Math.floor(diff / DAY), launched);
   }
 
   update();
