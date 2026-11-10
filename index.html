@@ -6,227 +6,126 @@
 <title>Walid's Counter</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg: #000000;
-    --panel: #050505;
-    --line: #262626;
-    --amber: #ffc400;
-    --glow: rgba(255,196,0,0.55);
-    --seg-off: transparent;            /* unlit segments hidden for legibility */
-    --text: #e6e6e6;
-    --muted: #7c7c7c;
-    --todo: #161616;
-    --out: #0c0c0c;
-    --live: #ff2b2b;
-  }
-  /* Red alert once launched */
-  body.launched{
-    --amber: #ff3b30;
-    --glow: rgba(255,59,48,0.6);
-    --seg-off: transparent;
+    --bg: #09090b;
+    --red: #ff4136;
+    --ink: #ececef;
+    --muted: #8a8b93;
+    --line: #26272c;
+    --todo: #1b1c21;
+    --out: #24252a;
   }
 
   *{ box-sizing: border-box; }
-
-  html, body{
-    margin: 0;
-    min-height: 100%;
-    background: var(--bg);
-  }
-
+  html, body{ margin: 0; min-height: 100%; background: var(--bg); }
   body{
     min-height: 100vh;
-    display: grid;
-    place-items: center;
-    padding: 24px 16px;
-    color: var(--text);
-    font-family: 'Rajdhani', system-ui, sans-serif;
+    color: var(--ink);
+    font-family: 'Manrope', system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
+    background:
+      radial-gradient(circle at 24% 46%, #2a0c0a 0%, #110807 35%, rgba(9,9,11,0) 65%) fixed,
+      var(--bg);
     overflow-x: hidden;
   }
 
-  /* faint scanlines + vignette over everything */
-  body::after{
-    content: "";
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    z-index: 5;
-    background:
-      radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.6) 100%),
-      repeating-linear-gradient(180deg, rgba(255,255,255,0.018) 0 1px, transparent 1px 3px);
-  }
-
-  /* ---------- Split-screen layout ---------- */
+  /* ---------- Layout (S1 · Refined) ---------- */
   .screen{
     width: min(1280px, 100%);
+    min-height: 100vh;
+    margin: 0 auto;
+    padding: 56px 72px;
     display: grid;
-    grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
-    grid-template-rows: auto auto;
-    gap: 10px;
+    grid-template-columns: minmax(0, 600px) minmax(0, 1fr);
+    gap: 60px;
+    align-items: center;
   }
-
-  .panel{
-    position: relative;
-    background: var(--panel);
-    border: 1px solid var(--line);
-    padding: 18px 22px 22px;
-    display: flex;
-    flex-direction: column;
-    gap: 18px;
-    animation: split 0.9s cubic-bezier(.7,0,.2,1) both;
-  }
-  .panel:nth-child(2){ animation-delay: .15s; }
-  .panel:nth-child(3){ animation-delay: .3s; }
-  @keyframes split{
-    0%{ clip-path: inset(0 50% 0 50%); opacity: .2; }
-    100%{ clip-path: inset(0 0 0 0); opacity: 1; }
-  }
-
-  .main{ grid-row: span 2; justify-content: space-between; }
-
-  .bar{
+  .counter{ display: flex; flex-direction: column; gap: 22px; }
+  .eyebrow{
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 0.18em;
+    gap: 16px;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.24em;
     text-transform: uppercase;
     color: var(--muted);
   }
-  .bar b{ color: var(--text); font-weight: 500; }
+  .eyebrow #statusFlag{ color: var(--red); font-size: 12px; letter-spacing: 0.2em; align-self: center; }
 
-  .live{ display: inline-flex; align-items: center; gap: 8px; color: var(--live); }
-  .live i{
-    width: 8px; height: 8px; border-radius: 50%;
-    background: var(--live);
-    box-shadow: 0 0 8px var(--live);
-    animation: blink 1s steps(2, start) infinite;
+  .days{
+    font-weight: 800;
+    font-size: clamp(150px, 20vw, 280px);
+    line-height: 0.78;
+    letter-spacing: -0.07em;
+    margin-left: -0.04em;
+    color: var(--red);
+    font-variant-numeric: tabular-nums;
+    user-select: none;
   }
-  @keyframes blink{ to{ visibility: hidden; } }
-
-  /* ---------- Seven-segment digits ---------- */
-  .seg7{
-    display: flex;
-    align-items: flex-end;
-    gap: 0.16em;
-    transform-origin: bottom left;
-  }
-  .digit{
-    height: 1em;
-    width: 0.6em;
-    overflow: visible;
-    filter: drop-shadow(0 0 0.025em var(--glow));
-  }
-  .seg{ fill: var(--seg-off); transition: fill .08s; }
-  .seg.on{ fill: var(--amber); }
-  .colon{
-    display: flex;
-    flex-direction: column;
-    justify-content: space-around;
-    height: 0.62em;
-    margin: 0 0.04em 0.18em;
-  }
-  .colon i{
-    display: block;
-    width: 0.1em; height: 0.1em;
-    background: var(--amber);
-    box-shadow: 0 0 0.08em var(--glow);
-  }
-
-  .days-wrap{ display: flex; flex-direction: column; gap: 14px; }
-  .days{ font-size: clamp(120px, 15vw, 210px); }
-  .caption{
-    font-size: 22px;
-    font-weight: 600;
-    letter-spacing: 0.32em;
-    text-transform: uppercase;
-    color: var(--muted);
-  }
-  .caption b{ color: var(--amber); font-weight: 700; }
+  .caption{ font-size: 20px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; }
 
   .breakdown{
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 26px 18px;
     padding-top: 18px;
-    border-top: 1px solid var(--line);
+    border-top: 4px solid var(--ink);
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 18px;
   }
-  .unit{ display: flex; flex-direction: column; gap: 10px; }
-  .unit .seg7{ font-size: clamp(56px, 6vw, 84px); }
+  .unit{ display: flex; flex-direction: column; gap: 6px; user-select: none; }
+  .unit .n{
+    font-size: clamp(30px, 3.2vw, 40px);
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+  }
+  .unit.sec .n{ color: var(--red); }
   .unit .l{
-    font-size: 14px;
+    font-size: 11px;
     font-weight: 700;
     letter-spacing: 0.2em;
     text-transform: uppercase;
-    color: #a8a8a8;
+    color: var(--muted);
   }
-  .unit.flash .seg.on, .days.flash .seg.on{ animation: segflash 0.9s ease-out; }
-  @keyframes segflash{ 0%{ fill: #ffffff; } 100%{ fill: var(--amber); } }
+  .unit.flash .n, .days.flash{ animation: flash 0.9s ease-out; }
+  @keyframes flash{ 0%{ color: #ffffff; } }
 
-  /* ---------- Timeline grid ---------- */
+  .status{ display: flex; flex-wrap: wrap; gap: 14px 34px; }
+  .stat{ display: flex; flex-direction: column; gap: 6px; }
+  .stat .k{ font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); }
+  .stat .v{ font-size: 17px; font-weight: 800; font-variant-numeric: tabular-nums; }
+  .stat .v.red{ color: var(--red); }
+
+  /* ---------- Year grid ---------- */
+  .timeline{ display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+  .timeline .head{
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
   .grid{
     display: grid;
-    grid-template-columns: 48px repeat(31, minmax(0, 1fr));
-    gap: 3px;
+    grid-template-columns: 44px repeat(31, minmax(0, 1fr));
+    gap: 4px;
     align-items: center;
   }
-  .month{
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 0.06em;
-    color: var(--text);
-    white-space: nowrap;
-  }
-  .month span{ color: var(--muted); }
+  .month{ font-size: 11px; font-weight: 700; white-space: nowrap; }
+  .month span{ font-weight: 500; color: var(--muted); }
   .cell{ aspect-ratio: 1; }
-  .sq{ width: 100%; height: 100%; transition: background .6s; }
+  .sq{ width: 100%; height: 100%; border-radius: 50%; transition: background .6s; }
   .sq.out{ box-shadow: inset 0 0 0 1px var(--out); }
   .sq.todo{ background: var(--todo); }
-  .sq.done{ background: var(--amber); opacity: .85; }
-  .sq.today{
-    background: #ffffff;
-    box-shadow: 0 0 0 2px var(--amber), 0 0 14px 3px var(--glow);
-    animation: blink 1s steps(2, start) infinite;
-  }
+  .sq.done{ background: var(--ink); }
+  .sq.today{ background: var(--red); box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--red); }
 
-  .legend{
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px 22px;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--muted);
-    padding-left: 51px;
-  }
-  .legend span{ display: flex; align-items: center; gap: 8px; }
-  .legend i{ width: 10px; height: 10px; display: inline-block; }
-
-  /* ---------- Status panel ---------- */
-  .status{
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 18px;
-  }
-  .stat{ display: flex; flex-direction: column; gap: 8px; }
-  .stat .k{
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: var(--muted);
-  }
-  .stat .v{ font-size: 24px; font-weight: 700; letter-spacing: 0.06em; }
-  .stat .v.amber{ color: var(--amber); }
-  .clock{ grid-column: span 2; }
-  .clock .seg7{ font-size: clamp(40px, 3.6vw, 54px); }
-
-  /* ---------- Sound button (icon only, 3 states) ---------- */
+  /* ---------- Sound button ---------- */
   .sound{
     position: fixed;
     top: 18px;
@@ -238,22 +137,21 @@
     place-items: center;
     padding: 0;
     border: 1px solid var(--line);
-    background: rgba(0,0,0,0.85);
+    background: rgba(9,9,11,0.85);
     color: var(--muted);
     cursor: pointer;
-    transition: color .3s, border-color .3s, box-shadow .3s;
+    transition: color .3s, border-color .3s;
   }
-  .sound:hover{ color: var(--text); border-color: var(--muted); }
-  .sound:focus-visible{ outline: 2px solid var(--amber); outline-offset: 2px; }
+  .sound:hover{ color: var(--ink); border-color: var(--muted); }
+  .sound:focus-visible{ outline: 2px solid var(--red); outline-offset: 2px; }
   .sound svg{ width: 22px; height: 22px; display: none; }
   .sound[data-mode="all"] .i-all,
   .sound[data-mode="quiet"] .i-quiet,
   .sound[data-mode="off"] .i-off{ display: block; }
-  .sound[data-mode="all"]{ color: var(--amber); border-color: var(--amber); box-shadow: 0 0 12px var(--glow); }
-  .sound[data-mode="quiet"]{ color: var(--amber); }
+  .sound[data-mode="all"]{ color: var(--red); border-color: var(--red); }
+  .sound[data-mode="quiet"]{ color: var(--red); }
 
   /* ---------- "Today is the day" banner over the counters ---------- */
-  .days-row{ display: flex; }
   .today-banner{
     position: fixed;
     inset: 0;
@@ -261,21 +159,20 @@
     display: none;
     place-items: center;
     padding: 16px;
-    pointer-events: none;                            /* counters and buttons stay usable underneath */
-    background: radial-gradient(ellipse at center, rgba(0,0,0,0.78) 0%, rgba(0,0,0,0.45) 55%, rgba(0,0,0,0.1) 100%);
+    pointer-events: none;
+    background: radial-gradient(ellipse at center, rgba(9,9,11,0.85) 0%, rgba(9,9,11,0.55) 55%, rgba(9,9,11,0.15) 100%);
   }
   body.arrived .today-banner{ display: grid; animation: msgIn 1.4s ease-out both; }
   .today-banner span{
     font-size: clamp(54px, 10vw, 168px);
-    font-weight: 700;
-    line-height: 0.95;
-    letter-spacing: 0.06em;
+    font-weight: 800;
+    line-height: 0.92;
+    letter-spacing: -0.02em;
     text-transform: uppercase;
     text-align: center;
-    color: #fff;
-    text-shadow: 0 0 24px var(--glow), 0 0 70px var(--glow), 0 4px 30px rgba(0,0,0,0.9);
+    color: var(--ink);
   }
-  @keyframes msgIn{ from{ opacity: 0; transform: scale(1.08); } to{ opacity: 1; transform: none; } }
+  @keyframes msgIn{ from{ opacity: 0; transform: scale(1.06); } to{ opacity: 1; transform: none; } }
 
   /* ---------- Final-minute overlay ---------- */
   .final{
@@ -284,7 +181,7 @@
     z-index: 20;
     display: grid;
     place-items: center;
-    background: rgba(0,0,0,0.94);
+    background: rgba(9,9,11,0.96);
     opacity: 0;
     pointer-events: none;
     transition: opacity .9s ease;
@@ -294,7 +191,7 @@
     content: "";
     position: absolute;
     inset: 0;
-    background: radial-gradient(ellipse at center, rgba(255,40,30,0.0) 30%, rgba(255,40,30,0.28) 100%);
+    background: radial-gradient(ellipse at center, rgba(255,65,54,0) 30%, rgba(255,65,54,0.25) 100%);
     opacity: 0;
     transition: opacity .6s;
   }
@@ -304,85 +201,66 @@
   @keyframes alarm{ 0%,100%{ opacity: .45; } 50%{ opacity: 1; } }
   .final-inner{ position: relative; display: flex; flex-direction: column; align-items: center; gap: 3vh; text-align: center; padding: 16px; }
   .final-label{
-    font-size: clamp(16px, 2.2vw, 26px);
+    font-size: clamp(14px, 1.8vw, 20px);
     font-weight: 700;
-    letter-spacing: 0.4em;
+    letter-spacing: 0.32em;
     text-transform: uppercase;
     color: var(--muted);
   }
-  .final[data-phase="critical"] .final-label{ color: #ff5a4e; }
-  .final-digits{ font-size: min(46vw, 56vh); }
-  .final[data-phase="critical"] .final-digits{ --amber: #ff3b30; --glow: rgba(255,59,48,0.6); }
+  .final[data-phase="critical"] .final-label{ color: var(--red); }
+  .final-digits{
+    font-size: min(46vw, 58vh);
+    font-weight: 800;
+    line-height: 0.8;
+    letter-spacing: -0.07em;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink);
+  }
+  .final[data-phase="tense"] .final-digits, .final[data-phase="critical"] .final-digits{ color: var(--red); }
   .final-digits.beat{ animation: beat .5s ease-out; }
-  @keyframes beat{ 0%{ transform: scale(1.06); } 100%{ transform: scale(1); } }
+  @keyframes beat{ 0%{ transform: scale(1.05); } 100%{ transform: scale(1); } }
   .final-bar{ width: min(70vw, 720px); height: 4px; background: rgba(255,255,255,0.1); }
-  .final-bar i{ display: block; height: 100%; width: 100%; background: var(--amber); box-shadow: 0 0 12px var(--glow); transition: width .25s linear; }
-  .final[data-phase="critical"] .final-bar i{ background: #ff3b30; }
+  .final-bar i{ display: block; height: 100%; width: 100%; background: var(--red); transition: width .25s linear; }
   .final-reached{
     display: none;
-    font-size: clamp(34px, 7vw, 96px);
-    font-weight: 700;
-    letter-spacing: 0.12em;
+    font-size: clamp(40px, 8vw, 120px);
+    font-weight: 800;
+    letter-spacing: -0.02em;
     text-transform: uppercase;
-    color: #fff;
-    text-shadow: 0 0 30px var(--glow), 0 0 80px var(--glow);
+    color: var(--ink);
   }
   .final[data-phase="zero"] .final-reached{ display: block; animation: reached 1.4s ease-out both; }
   .final[data-phase="zero"] .final-digits, .final[data-phase="zero"] .final-bar{ display: none; }
-  @keyframes reached{ 0%{ opacity: 0; transform: scale(1.4); filter: blur(8px); } 100%{ opacity: 1; transform: none; filter: none; } }
+  @keyframes reached{ 0%{ opacity: 0; transform: scale(1.3); filter: blur(8px); } 100%{ opacity: 1; transform: none; filter: none; } }
   .final-flash{ position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; }
   .final[data-phase="zero"] .final-flash{ animation: whiteout 1.6s ease-out; }
   @keyframes whiteout{ 0%{ opacity: .9; } 100%{ opacity: 0; } }
   .final-controls{ display: none; gap: 10px; margin-top: 2vh; flex-wrap: wrap; justify-content: center; }
   body.previewing .final-controls{ display: flex; }
   .final-controls button, .preview-note button{
-    min-height: 44px;
-    padding: 0 18px;
-    background: transparent;
-    border: 1px solid var(--line);
-    color: var(--text);
-    font: 600 14px/1 'Rajdhani', sans-serif;
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
-    cursor: pointer;
+    min-height: 44px; padding: 0 18px;
+    background: transparent; border: 1px solid var(--line); color: var(--ink);
+    font: 700 13px/1 'Manrope', sans-serif; letter-spacing: 0.16em; text-transform: uppercase; cursor: pointer;
   }
-  .final-controls button:hover, .preview-note button:hover{ border-color: var(--amber); color: var(--amber); }
-
-  /* Banner shown on the zero screen during a preview */
   .preview-note{
-    position: fixed;
-    left: 50%;
-    bottom: 18px;
-    transform: translateX(-50%);
-    z-index: 16;
-    display: none;
-    align-items: center;
-    gap: 14px;
-    padding: 8px 8px 8px 16px;
-    background: rgba(0,0,0,0.9);
-    border: 1px solid var(--amber);
-    font: 600 13px/1.2 'JetBrains Mono', monospace;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--amber);
+    position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); z-index: 16;
+    display: none; align-items: center; gap: 14px; padding: 8px 8px 8px 16px;
+    background: rgba(9,9,11,0.92); border: 1px solid var(--red);
+    font: 700 12px/1.2 'Manrope', sans-serif; letter-spacing: 0.1em; text-transform: uppercase; color: var(--red);
   }
   body.previewing.arrived .preview-note{ display: flex; }
 
-  @media (max-width: 900px){
-    body{ padding-top: 80px; place-items: start center; }
-    .screen{ grid-template-columns: minmax(0, 1fr); }
-    .clock .seg7{ font-size: 40px; }
-    .main{ grid-row: auto; }
-    .unit .seg7{ font-size: 50px; }
-    .grid{ grid-template-columns: 38px repeat(31, minmax(0, 1fr)); gap: 2px; }
+  /* ---------- Phones and narrow windows ---------- */
+  @media (max-width: 960px){
+    .screen{ grid-template-columns: minmax(0, 1fr); padding: 76px 16px 32px; gap: 40px; align-items: start; }
+    .days{ font-size: 38vw; }
+    .breakdown{ grid-template-columns: repeat(3, minmax(0, 1fr)); row-gap: 20px; }
+    .unit .n{ font-size: 36px; }
+    .grid{ grid-template-columns: 36px repeat(31, minmax(0, 1fr)); gap: 2px; }
     .month{ font-size: 9px; }
-    .legend{ padding-left: 0; }
-    .status{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .clock{ grid-column: span 2; }
   }
-
   @media (prefers-reduced-motion: reduce){
-    .panel, .sq.today, .live i, .final::before, .final-digits.beat, .final-reached, .final-flash{ animation: none !important; }
+    .final::before, .final-digits.beat, .final-reached, .final-flash, .today-banner{ animation: none !important; }
   }
 </style>
 </head>
@@ -393,7 +271,7 @@
   <div class="final-flash"></div>
   <div class="final-inner">
     <div class="final-label" id="finalLabel">Final minute</div>
-    <div class="seg7 final-digits" id="finalDigits" role="img" aria-label="Seconds remaining"></div>
+    <div class="final-digits" id="finalDigits" aria-label="Seconds remaining">60</div>
     <div class="final-reached">Today is the day</div>
     <div class="final-bar"><i id="finalBar"></i></div>
     <div class="final-controls">
@@ -418,55 +296,30 @@
 
 <main class="screen">
 
-  <!-- Main clock -->
-  <section class="panel main">
-    <div class="bar">
-      <span>Walid's Counter · <b>T-minus</b></span>
-      <span class="live"><i></i>Live</span>
-    </div>
-
-    <div class="days-wrap">
-      <div class="days-row">
-        <div class="seg7 days" id="daysDisplay" role="img" aria-label="Days remaining"></div>
-      </div>
-      <div class="caption" id="daysLabel"><b>Days</b> to target</div>
-    </div>
+  <section class="counter">
+    <div class="eyebrow"><span>Walid's Counter</span><span id="statusFlag">Countdown active</span></div>
+    <div class="days" id="daysDisplay" aria-label="Days remaining">000</div>
+    <div class="caption" id="daysLabel">Days to go</div>
 
     <div class="breakdown" aria-label="Time remaining">
-      <div class="unit" id="uMo"><div class="seg7" id="dMo"></div><span class="l">Months</span></div>
-      <div class="unit" id="uWk"><div class="seg7" id="dWk"></div><span class="l">Weeks</span></div>
-      <div class="unit" id="uDy"><div class="seg7" id="dDy"></div><span class="l">Days</span></div>
-      <div class="unit" id="uHr"><div class="seg7" id="dHr"></div><span class="l">Hours</span></div>
-      <div class="unit" id="uMi"><div class="seg7" id="dMi"></div><span class="l">Min</span></div>
-      <div class="unit" id="uSe"><div class="seg7" id="dSe"></div><span class="l">Sec</span></div>
+      <div class="unit" id="uMo"><span class="n" id="dMo">00</span><span class="l">Months</span></div>
+      <div class="unit" id="uWk"><span class="n" id="dWk">00</span><span class="l">Weeks</span></div>
+      <div class="unit" id="uDy"><span class="n" id="dDy">00</span><span class="l">Days</span></div>
+      <div class="unit" id="uHr"><span class="n" id="dHr">00</span><span class="l">Hours</span></div>
+      <div class="unit" id="uMi"><span class="n" id="dMi">00</span><span class="l">Min</span></div>
+      <div class="unit sec" id="uSe"><span class="n" id="dSe">00</span><span class="l">Sec</span></div>
     </div>
-  </section>
 
-  <!-- Timeline -->
-  <section class="panel">
-    <div class="bar">
-      <span>Timeline · <b>Day by day</b></span>
-      <span id="dayCount">Day 000 / 365</span>
-    </div>
-    <div class="grid" id="grid" role="img" aria-label="Days elapsed"></div>
-    <div class="legend">
-      <span><i style="background: var(--amber)"></i>Done</span>
-      <span><i style="background: #fff; box-shadow: 0 0 0 1px var(--amber)"></i>Today</span>
-      <span><i style="background: var(--todo)"></i>To go</span>
-    </div>
-  </section>
-
-  <!-- Status -->
-  <section class="panel">
-    <div class="bar">
-      <span>Status</span>
-      <span id="statusFlag">Countdown active</span>
-    </div>
     <div class="status">
       <div class="stat"><span class="k">Target</span><span class="v" id="targetDate">—</span></div>
-      <div class="stat"><span class="k">Progress</span><span class="v amber" id="progress">—</span></div>
-      <div class="stat clock"><span class="k">Local time</span><div class="seg7" id="localClock" role="img" aria-label="Local time"></div></div>
+      <div class="stat"><span class="k">Progress</span><span class="v red" id="progress">—</span></div>
+      <div class="stat"><span class="k">Local time</span><span class="v" id="localClock">—</span></div>
     </div>
+  </section>
+
+  <section class="timeline">
+    <div class="head"><span>Timeline</span><span id="dayCount">Day 000 / 365</span></div>
+    <div class="grid" id="grid" role="img" aria-label="Days elapsed"></div>
   </section>
 
 </main>
@@ -517,21 +370,8 @@
   }
 
   // pattern like "000" or "00:00:00" — ":" becomes a colon, everything else a digit
-  function makeDisplay(container, pattern){
-    const digits = [];
-    for (const ch of pattern){
-      if (ch === ":"){
-        const c = document.createElement("span");
-        c.className = "colon";
-        c.innerHTML = "<i></i><i></i>";
-        container.appendChild(c);
-      } else {
-        const d = makeDigit();
-        container.appendChild(d.el);
-        digits.push(d);
-      }
-    }
-    return { set(str){ const s = str.replace(/:/g, "").padStart(digits.length, " "); digits.forEach((d, i) => d.set(s[i])); } };
+  function makeDisplay(container){
+    return { set(str){ if (container.textContent !== str) container.textContent = str; } };
   }
 
   const disp = {
@@ -547,7 +387,7 @@
 
   /* ---------------- Timeline grid ---------------- */
   document.getElementById("targetDate").textContent =
-    `${pad(targetDate.getDate())}.${pad(targetDate.getMonth() + 1)}.${targetDate.getFullYear()}`;
+    `${targetDate.getDate()} ${["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][targetDate.getMonth()]} ${targetDate.getFullYear()}`;
 
   const startKey = dateKey(startDate);
   const endKey = dateKey(new Date(targetDate - 1)); // last full day before the target moment
