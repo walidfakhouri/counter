@@ -1309,7 +1309,9 @@
       const pct = Math.max(0, Math.min(100, (now - startDate) / (targetDate - startDate) * 100));
       progress.textContent = pct.toFixed(1) + "%";
       b = breakdown(now, targetDate);
-      daysLeft = Math.floor(diff / DAY);
+      // Count calendar days on the wall clock, so summer/winter time changes can't shift it by an hour
+      const wall = (d) => Date.UTC(d.getFullYear(), d.getMonth(), d.getDate(), d.getHours(), d.getMinutes(), d.getSeconds(), d.getMilliseconds());
+      daysLeft = Math.floor((wall(targetDate) - wall(now)) / DAY);
     }
 
     disp.days.set(pad(daysLeft, 3));
