@@ -187,14 +187,54 @@
   /* ---------- "Today is the day" banner ---------- */
   .today-banner{
     position: fixed; inset: 0; z-index: 15; display: none; place-items: center; padding: 16px; pointer-events: none;
-    background: radial-gradient(ellipse at center, rgba(1,6,3,0.85) 0%, rgba(1,6,3,0.55) 55%, rgba(1,6,3,0.15) 100%);
+    background: rgba(1,6,3,0.9);
+    backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
   }
   body.arrived .today-banner{ display: grid; animation: msgIn 1.4s ease-out both; }
   .today-banner span{
     font-size: clamp(54px, 10vw, 168px); font-weight: 800; line-height: 0.92; letter-spacing: -0.02em;
     text-transform: uppercase; text-align: center; color: var(--ink);
   }
+  .tb{ display: flex; flex-direction: column; align-items: center; gap: 2.4vh; position: relative; }
+  .tb-eye, .tb-date{ display: none; font-size: clamp(12px, 1.5vw, 18px); letter-spacing: 0.3em; text-transform: uppercase; color: rgba(243,193,75,0.8); }
+  body.after .tb-eye, body.after .tb-date{ display: block; }
+  body.after .tb-date{ color: #fff3d6; letter-spacing: 0.22em; }
+  body.gold .pill{ background: rgba(243,193,75,0.12); border-color: rgba(243,193,75,0.32); color: #f6d58a; }
+  body.gold .stat .green{ color: var(--gold); }
+  body.arrived.a-out .today-banner{ animation: msgOut 1.8s ease-in-out both; }
+  body.arrived.a-out .screen{ filter: none; transition: filter 1.8s ease-in-out; }
+  @keyframes msgOut{ from{ opacity: 1; transform: none; } to{ opacity: 0; transform: scale(0.97); } }
   @keyframes msgIn{ from{ opacity: 0; transform: scale(1.06); } to{ opacity: 1; transform: none; } }
+
+
+  /* ---------- Gold mode: from the last 10 seconds onwards the whole page turns gold ---------- */
+  body.gold{
+    --green: #f3c14b;
+    background:
+      radial-gradient(circle 46vmax at 26% 50%, rgba(220,160,40,0.24) 0%, rgba(120,80,10,0.10) 55%, transparent 100%) fixed,
+      radial-gradient(ellipse 45vmax 30vmax at 92% 100%, rgba(243,193,75,0.12) 0%, transparent 70%) fixed,
+      radial-gradient(ellipse 36vmax 26vmax at 70% 0%, rgba(240,200,110,0.10) 0%, transparent 70%) fixed,
+      #050402;
+  }
+  body.gold .eyebrow{ color: rgba(243,193,75,0.75); }
+  body.gold .unit .l, body.gold .timeline .head{ color: rgba(243,193,75,0.6); }
+  body.gold .sound[data-mode="all"]{ border-color: rgba(243,193,75,0.6); }
+  body.gold #arcGrad stop:first-child{ stop-color: #7a5512; }
+  body.gold #arcGrad stop:last-child{ stop-color: #f3c14b; }
+  body.gold #arcGlow{ stroke: #f3c14b; }
+  body.gold #nowDot{ fill: #f3c14b; }
+  body.gold .ring circle.track{ stroke: rgba(220,160,40,0.13); }
+  body.gold .ring circle.dash{ stroke: rgba(243,193,75,0.35); }
+  .final[data-phase="zero"]::before{ opacity: 1; }
+  .final[data-phase="zero"] .final-reached{ color: var(--gold); text-shadow: 0 0 40px rgba(243,193,75,0.35); }
+  body.gold .today-banner{ background: radial-gradient(ellipse at center, rgba(5,4,2,0.55) 0%, rgba(5,4,2,0) 60%); backdrop-filter: none; -webkit-backdrop-filter: none; }
+  body.arrived .screen{ filter: blur(5px) brightness(0.3); transition: filter 1.2s ease; }
+  /* gold flash as the final screen arrives */
+  .today-banner::before{ content: ""; position: absolute; inset: 0; pointer-events: none; opacity: 0;
+    background: radial-gradient(ellipse at center, #f3c14b 0%, rgba(243,193,75,0.35) 70%); }
+  body.arrived .today-banner::before{ animation: whiteout 1.6s ease-out; }
+  .today-banner span{ position: relative; }
+  body.gold .today-banner span{ color: var(--gold); text-shadow: 0 0 50px rgba(243,193,75,0.3); }
 
   /* ---------- Final-minute overlay ---------- */
   .final{
@@ -206,29 +246,29 @@
   .final.show{ opacity: 1; pointer-events: auto; }
   .final::before{
     content: ""; position: absolute; inset: 0;
-    background: radial-gradient(ellipse at center, rgba(255,65,54,0) 30%, rgba(255,65,54,0.25) 100%);
+    background: radial-gradient(ellipse at center, rgba(243,193,75,0) 30%, rgba(243,193,75,0.22) 100%);
     opacity: 0; transition: opacity .6s;
   }
   .final[data-phase="critical"]::before{ opacity: 1; animation: alarm 1s ease-in-out infinite; }
   @keyframes alarm{ 0%,100%{ opacity: .45; } 50%{ opacity: 1; } }
   .final-inner{ position: relative; display: flex; flex-direction: column; align-items: center; gap: 3vh; text-align: center; padding: 16px; }
   .final-label{ font-family: 'JetBrains Mono', monospace; font-size: clamp(13px, 1.6vw, 18px); letter-spacing: 0.24em; text-transform: uppercase; color: rgba(57,255,140,0.75); }
-  .final[data-phase="critical"] .final-label{ color: var(--red); }
+  .final[data-phase="critical"] .final-label{ color: var(--gold); }
   .final-digits{ font-size: min(46vw, 58vh); font-weight: 800; line-height: 0.8; letter-spacing: -0.07em; font-variant-numeric: tabular-nums; color: var(--ink); }
   .final[data-phase="tense"] .final-digits{ color: var(--green); }
-  .final[data-phase="critical"] .final-digits{ color: var(--red); }
+  .final[data-phase="critical"] .final-digits{ color: var(--gold); text-shadow: 0 0 40px rgba(243,193,75,0.35); }
   .final-digits.beat{ animation: beat .5s ease-out; }
   @keyframes beat{ 0%{ transform: scale(1.05); } 100%{ transform: scale(1); } }
   .final-bar{ width: min(70vw, 720px); height: 4px; border-radius: 4px; background: rgba(255,255,255,0.1); overflow: hidden; }
   .final-bar i{ display: block; height: 100%; width: 100%; background: linear-gradient(90deg, #0b6b35, var(--green)); transition: width .25s linear; }
-  .final[data-phase="critical"] .final-bar i{ background: var(--red); }
+  .final[data-phase="critical"] .final-bar i{ background: linear-gradient(90deg, #a8781c, var(--gold)); }
   .final-reached{ display: none; font-size: clamp(40px, 8vw, 120px); font-weight: 800; letter-spacing: -0.02em; text-transform: uppercase; color: var(--ink); }
-  .final[data-phase="zero"] .final-reached{ display: block; animation: reached 1.4s ease-out both; }
+  .final[data-phase="zero"] .final-reached{ display: none; }   /* the final screen says it instead */
   .final[data-phase="zero"] .final-digits, .final[data-phase="zero"] .final-bar{ display: none; }
   @keyframes reached{ 0%{ opacity: 0; transform: scale(1.3); filter: blur(8px); } 100%{ opacity: 1; transform: none; filter: none; } }
-  .final-flash{ position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; }
+  .final-flash{ position: absolute; inset: 0; background: radial-gradient(ellipse at center, #f3c14b 0%, rgba(243,193,75,0.35) 70%); opacity: 0; pointer-events: none; }
   .final[data-phase="zero"] .final-flash{ animation: whiteout 1.6s ease-out; }
-  @keyframes whiteout{ 0%{ opacity: .9; } 100%{ opacity: 0; } }
+  @keyframes whiteout{ 0%{ opacity: .45; } 100%{ opacity: 0; } }
   .final-controls{ display: none; gap: 10px; margin-top: 2vh; flex-wrap: wrap; justify-content: center; }
   body.previewing .final-controls{ display: flex; }
   .final-controls button, .preview-note button{
@@ -274,7 +314,7 @@
   </div>
 </div>
 
-<div class="today-banner" id="todayBanner" role="status"><span>Today is<br>the day</span></div>
+<div class="today-banner" id="todayBanner" role="status"><div class="tb"><div class="tb-eye mono" id="tbEye"></div><span id="tbMain">Today is<br>the day</span><div class="tb-date mono" id="tbDate"></div></div></div>
 
 <div class="preview-note" id="previewNote">Preview · returning to the live countdown <button type="button" id="exitBtn2">Exit now</button></div>
 
@@ -300,9 +340,9 @@
           <stop offset="1" stop-color="#39ff8c"/>
         </linearGradient>
       </defs>
-      <circle cx="300" cy="300" r="260" fill="none" stroke="rgba(20,200,110,0.13)" stroke-width="24"/>
+      <circle class="track" cx="300" cy="300" r="260" fill="none" stroke="rgba(20,200,110,0.13)" stroke-width="24"/>
       <circle cx="300" cy="300" r="282" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
-      <circle cx="300" cy="300" r="232" fill="none" stroke="rgba(57,255,140,0.35)" stroke-width="1" stroke-dasharray="2 9"/>
+      <circle class="dash" cx="300" cy="300" r="232" fill="none" stroke="rgba(57,255,140,0.35)" stroke-width="1" stroke-dasharray="2 9"/>
       <g stroke="rgba(255,255,255,0.28)" stroke-width="2" stroke-linecap="round"><line x1="300.0" y1="10.0" x2="300.0" y2="0.0"/><line x1="445.0" y1="48.9" x2="450.0" y2="40.2"/><line x1="551.1" y1="155.0" x2="559.8" y2="150.0"/><line x1="590.0" y1="300.0" x2="600.0" y2="300.0"/><line x1="551.1" y1="445.0" x2="559.8" y2="450.0"/><line x1="445.0" y1="551.1" x2="450.0" y2="559.8"/><line x1="300.0" y1="590.0" x2="300.0" y2="600.0"/><line x1="155.0" y1="551.1" x2="150.0" y2="559.8"/><line x1="48.9" y1="445.0" x2="40.2" y2="450.0"/><line x1="10.0" y1="300.0" x2="0.0" y2="300.0"/><line x1="48.9" y1="155.0" x2="40.2" y2="150.0"/><line x1="155.0" y1="48.9" x2="150.0" y2="40.2"/></g>
       <circle id="arcGlow" cx="300" cy="300" r="260" fill="none" stroke="#39ff8c" stroke-opacity="0.55" stroke-width="40" stroke-dasharray="0 1634" stroke-linecap="round" transform="rotate(-90 300 300)" style="filter: blur(14px)"/>
       <circle id="arc" cx="300" cy="300" r="260" fill="none" stroke="url(#arcGrad)" stroke-width="24" stroke-dasharray="0 1634" stroke-linecap="round" transform="rotate(-90 300 300)"/>
@@ -312,7 +352,7 @@
       <circle cx="300" cy="40" r="10" fill="#f3c14b"/>
     </svg>
     <div class="disc glass">
-      <div class="eyebrow mono">&gt; walid.counter_</div>
+      <div class="eyebrow mono" id="eyebrow">&gt; walid.counter_</div>
       <div class="days" id="daysDisplay" aria-label="Days remaining">000</div>
       <div class="caption" id="daysLabel">Days to go</div>
       <div class="pill mono">SYS · <span id="progress">0.0%</span> COMPLETE</div>
@@ -347,6 +387,7 @@
   // Start and target — edit these to change the countdown
   const startDate  = new Date("2026-10-23T00:00:00");
   const targetDate = new Date("2027-10-23T00:00:00");
+  let afterStyle = "AB";       // from the day after: "A" = "The day arrived" screen, "B" = count-up since the day, "AB" = A first, then fades into B
 
   const SEC = 1000, MIN = 60 * SEC, HOUR = 60 * MIN, DAY = 24 * HOUR, WEEK = 7 * DAY;
   const pad = (n, l = 2) => String(n).padStart(l, "0");
@@ -1092,7 +1133,7 @@
           if (document.visibilityState === "visible") playLaunchNow(); else pendingLaunch = true;
         } else if (!actx) pendingLaunch = true;
       }
-      if (now.getTime() - zeroAt >= 10000){
+      {                                               // straight to the final screen (no second "Today is the day")
         hideOverlay();
         if (previewing && !previewEndTimer) previewEndTimer = setTimeout(exitPreview, 9000);   // preview: show the final screen, then return
       }
@@ -1167,14 +1208,15 @@
   sizeRain();
   addEventListener("resize", sizeRain);
   function drawRain(){
-    rctx.fillStyle = "rgba(1, 6, 3, 0.09)";                  // fade = trail length
+    const gold = document.body.classList.contains("gold");
+    rctx.fillStyle = gold ? "rgba(5, 4, 2, 0.09)" : "rgba(1, 6, 3, 0.09)";                  // fade = trail length
     rctx.fillRect(0, 0, rain.width, rain.height);
     rctx.font = FS + "px 'JetBrains Mono', monospace";
     for (let i = 0; i < rcols; i++){
       const y = Math.floor(drops[i]) * FS, x = i * FS;
-      rctx.fillStyle = "rgba(190, 255, 215, 0.34)";           // bright leading glyph
+      rctx.fillStyle = gold ? "rgba(255, 235, 190, 0.34)" : "rgba(190, 255, 215, 0.34)";           // bright leading glyph
       rctx.fillText(GLYPHS[(Math.random() * GLYPHS.length) | 0], x, y);
-      rctx.fillStyle = "rgba(57, 255, 140, 0.18)";            // trailing glyph
+      rctx.fillStyle = gold ? "rgba(243, 193, 75, 0.18)" : "rgba(57, 255, 140, 0.18)";            // trailing glyph
       rctx.fillText(GLYPHS[(Math.random() * GLYPHS.length) | 0], x, y - FS);
       if (y > rain.height && Math.random() > 0.97) drops[i] = Math.random() * -20;
       drops[i] += speeds[i];
@@ -1187,28 +1229,59 @@
   const dayCount = document.getElementById("dayCount");
   const progress = document.getElementById("progress");
   const statusFlag = document.getElementById("statusFlag");
+  const eyebrowEl = document.getElementById("eyebrow");
+  const tbEye = document.getElementById("tbEye"), tbMain = document.getElementById("tbMain"), tbDate = document.getElementById("tbDate");
   const ZERO = { m: 0, w: 0, d: 0, h: 0, mi: 0, s: 0 };
   let firstRun = true;
+  let msgShownAt = null;       // when the final message first appeared
 
   function update(){
     const now = nowTime();
     const diff = targetDate - now;
     const launched = diff <= 0;
     let b, daysLeft;
+    document.body.classList.toggle("gold", diff <= 10000);   // gold from the last 10 seconds onwards
+
+    const wall = (d) => Date.UTC(d.getFullYear(), d.getMonth(), d.getDate(), d.getHours(), d.getMinutes(), d.getSeconds(), d.getMilliseconds());
+    const onTheDay = launched && dateKey(now) === dateKey(targetDate);
+    const after = launched && !onTheDay;
+    let showA = false;
+    document.body.classList.toggle("after", after);
 
     if (launched){
-      // At and after the target: everything reads zero and "Today is the day" shows (once the overlay has gone)
       document.body.classList.add("launched");
-      document.body.classList.toggle("arrived", !inFinal);
-      statusFlag.textContent = "[ TODAY IS THE DAY ]";
       progress.textContent = "100%";
       setRing(100);
       dayCount.textContent = `day_${totalDays} / ${totalDays}`;
       paintGrid(null, true);
-      b = ZERO; daysLeft = 0;
-      if (firstRun && !previewing){ pendingLaunch = true; if (actx) playLaunchNow(); }   // opened after the date
+      const sinceDays = Math.floor((wall(now) - wall(targetDate)) / DAY);
+      // The message shows first ("Today is the day" on the day, "The day arrived" after it),
+      // holds, fades out over 2 s, and the count-up (B) carries on underneath
+      if (!inFinal && msgShownAt === null) msgShownAt = performance.now();
+      const me = msgShownAt === null ? 0 : performance.now() - msgShownAt;
+      const hold = onTheDay ? 20000 : 6000;            // on the day: long enough for the launch sound
+      showA = !inFinal && (afterStyle === "AB" ? me < hold + 2000 : (afterStyle === "A" || onTheDay));
+      document.body.classList.toggle("a-out", afterStyle === "AB" && !inFinal && me >= hold && me < hold + 2000);
+      if (onTheDay){
+        tbMain.innerHTML = "Today is<br>the day";
+        if (firstRun && !previewing){ pendingLaunch = true; if (actx) playLaunchNow(); }   // opened on the day: launch on first tap
+      } else {
+        tbEye.innerHTML = "&gt; walid.counter_ · complete";
+        tbMain.innerHTML = "The day<br>arrived";
+        tbDate.textContent = targetDate.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+      }
+      // Count-up since the day (B)
+      statusFlag.textContent = onTheDay ? "[ TODAY IS THE DAY ]" : "[ COMPLETE ]";
+      eyebrowEl.innerHTML = "&gt; the day arrived";
+      daysLabel.textContent = onTheDay ? "Today is the day" : sinceDays === 1 ? "Day since" : "Days since";
+      b = breakdown(targetDate, now);
+      daysLeft = sinceDays;
+      document.body.classList.toggle("arrived", showA);
     } else {
-      document.body.classList.remove("launched", "arrived");
+      document.body.classList.remove("launched", "arrived", "a-out");
+      msgShownAt = null;
+      eyebrowEl.innerHTML = "&gt; walid.counter_";
+      daysLabel.textContent = "Days to go";
       statusFlag.textContent = previewing ? "[ PREVIEW ]" : "[ ACTIVE ]";
       const todayKey = dateKey(now);
       paintGrid(todayKey, false);
@@ -1219,7 +1292,6 @@
       setRing(pct);
       b = breakdown(now, targetDate);
       // Count calendar days on the wall clock, so summer/winter time changes can't shift it by an hour
-      const wall = (d) => Date.UTC(d.getFullYear(), d.getMonth(), d.getDate(), d.getHours(), d.getMinutes(), d.getSeconds(), d.getMilliseconds());
       daysLeft = Math.floor((wall(targetDate) - wall(now)) / DAY);
     }
 
@@ -1233,7 +1305,6 @@
     disp.clock.set(`${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`);
 
     runFinal(now, diff);
-    if (launched) document.body.classList.toggle("arrived", !inFinal);
     announce(b, daysLeft, launched);
     firstRun = false;
   }
