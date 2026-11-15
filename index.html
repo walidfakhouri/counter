@@ -123,7 +123,17 @@
   .sq.out{ box-shadow: inset 0 0 0 1px var(--out); }
   .sq.todo{ background: var(--todo); }
   .sq.done{ background: var(--ink); }
-  .sq.today{ background: var(--red); box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--red); }
+  /* Today: a solid red circle with a soft pulsing red glow (same shape as the gold target day) */
+  .sq.today{
+    background: var(--red);
+    box-shadow: 0 0 6px 2px rgba(255,65,54,0.75), 0 0 18px 6px rgba(255,65,54,0.35);
+    animation: redGlow 2.8s ease-in-out infinite;
+  }
+  @keyframes redGlow{
+    0%, 100%{ box-shadow: 0 0 6px 2px rgba(255,65,54,0.75), 0 0 18px 6px rgba(255,65,54,0.35); }
+    50%{ box-shadow: 0 0 9px 3px rgba(255,65,54,0.95), 0 0 26px 10px rgba(255,65,54,0.5); }
+  }
+  @media (prefers-reduced-motion: reduce){ .sq.today{ animation: none; } }
   /* The target day: a glowing gold circle */
   .sq.target{
     background: #f3c14b;                              /* flat gold, no 3D shading */
