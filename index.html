@@ -123,11 +123,19 @@
 
   .breakdown{ display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 14px; }
   .unit{ display: flex; flex-direction: column; gap: 6px; user-select: none; }
-  .unit .n{ font-size: clamp(28px, 3vw, 38px); font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; }
+  .unit .n{ display: inline-block; transform-origin: left center; font-size: clamp(28px, 3vw, 38px); font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; }
   .unit.sec .n{ color: var(--green); }
   .unit .l{ font-size: 10px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(57,255,140,0.6); }
+  /* Bright flash when a counter changes: white-hot core, strong green glow, a small pop */
   .unit.flash .n, .days.flash{ animation: flash 0.9s ease-out; }
-  @keyframes flash{ 0%{ color: var(--green); text-shadow: 0 0 18px var(--green); } }
+  @keyframes flash{
+    0%{ color: #ffffff; transform: scale(1.12);
+        text-shadow: 0 0 4px #ffffff, 0 0 12px #ffffff, 0 0 26px var(--green), 0 0 48px var(--green), 0 0 80px rgba(57,255,140,0.7); }
+    35%{ color: #ffffff; transform: scale(1.03);
+        text-shadow: 0 0 8px var(--green), 0 0 24px var(--green), 0 0 44px rgba(57,255,140,0.5); }
+    100%{ transform: none; text-shadow: none; }
+  }
+  .unit.sec.flash .n{ animation-duration: 0.7s; }
 
   .timeline{ display: flex; flex-direction: column; gap: 12px; }
   .timeline .head{ display: flex; justify-content: space-between; font-size: 10px; font-weight: 500; letter-spacing: 0.22em; text-transform: uppercase; color: rgba(57,255,140,0.6); }
@@ -955,6 +963,7 @@
     day: document.getElementById("uDy"),
     hour: document.getElementById("uHr"),
     minute: document.getElementById("uMi"),
+    second: document.getElementById("uSe"),
   };
 
   function flash(unit){
@@ -982,6 +991,7 @@
 
       if (unit){
         flash(unit);
+        if (unit !== "second" && b.s !== prev.s) flash("second");   // the seconds flash on every tick too
         if (actx && shouldPlay(unit)) play(unit);
       }
     }
