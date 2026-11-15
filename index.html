@@ -124,6 +124,17 @@
   .sq.todo{ background: var(--todo); }
   .sq.done{ background: var(--ink); }
   .sq.today{ background: var(--red); box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--red); }
+  /* The target day: a glowing gold circle */
+  .sq.target{
+    background: radial-gradient(circle at 35% 35%, #fff3c4 0%, #f3c14b 45%, #c8901c 100%);
+    box-shadow: 0 0 6px 2px rgba(243,193,75,0.75), 0 0 18px 6px rgba(243,193,75,0.35);
+    animation: goldGlow 2.8s ease-in-out infinite;
+  }
+  @keyframes goldGlow{
+    0%, 100%{ box-shadow: 0 0 6px 2px rgba(243,193,75,0.75), 0 0 18px 6px rgba(243,193,75,0.35); }
+    50%{ box-shadow: 0 0 9px 3px rgba(243,193,75,0.95), 0 0 26px 10px rgba(243,193,75,0.5); }
+  }
+  @media (prefers-reduced-motion: reduce){ .sq.target{ animation: none; } }
 
   /* ---------- Sound button ---------- */
   .sound{
@@ -391,6 +402,7 @@
 
   const startKey = dateKey(startDate);
   const endKey = dateKey(new Date(targetDate - 1)); // last full day before the target moment
+  const targetKey = dateKey(targetDate);             // the target day itself (glows gold)
 
   const grid = document.getElementById("grid");
   const dots = [];
@@ -410,7 +422,7 @@
         const k = key(y, mo, d);
         const sq = document.createElement("div");
         const inRange = k >= startKey && k <= endKey;
-        sq.className = "sq " + (inRange ? "todo" : "out");
+        sq.className = "sq " + (k === targetKey ? "target" : inRange ? "todo" : "out");
         sq.title = `${d} ${months[mo]} ${y}`;
         cell.appendChild(sq);
         if (inRange) dots.push({ key: k, el: sq });
