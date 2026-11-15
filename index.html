@@ -6,16 +6,20 @@
 <title>Walid's Counter</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg: #09090b;
-    --red: #ff4136;
-    --ink: #ececef;
-    --muted: #8a8b93;
-    --line: #26272c;
-    --todo: #1b1c21;
-    --out: #24252a;
+    --bg: #010603;
+    --green: #39ff8c;          /* Matrix green: "now" */
+    --accent: #14c86e;
+    --mint: #8dffbf;
+    --pale: #d6ffe6;
+    --ink: #eafff0;
+    --ink-rgb: 234,255,240;
+    --gold: #f3c14b;
+    --red: #ff4136;            /* final-seconds alarm */
+    --muted: rgba(234,255,240,0.5);
+    --line: rgba(255,255,255,0.10);
   }
 
   *{ box-sizing: border-box; }
@@ -25,231 +29,192 @@
     color: var(--ink);
     font-family: 'Manrope', system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
-    background:
-      radial-gradient(circle at 24% 46%, #2a0c0a 0%, #110807 35%, rgba(9,9,11,0) 65%) fixed,
-      var(--bg);
     overflow-x: hidden;
+    background:
+      radial-gradient(circle 46vmax at 26% 50%, rgba(20,200,110,0.26) 0%, rgba(10,110,50,0.10) 55%, transparent 100%) fixed,
+      radial-gradient(ellipse 45vmax 30vmax at 92% 100%, rgba(57,255,140,0.12) 0%, transparent 70%) fixed,
+      radial-gradient(ellipse 36vmax 26vmax at 70% 0%, rgba(80,220,140,0.10) 0%, transparent 70%) fixed,
+      var(--bg);
+  }
+  .mono{ font-family: 'JetBrains Mono', monospace; }
+
+  /* ---------- Code rain + scanlines (behind / over everything) ---------- */
+  #rain{ position: fixed; inset: 0; width: 100%; height: 100%; display: block; z-index: 0; pointer-events: none; }
+  .scan{
+    position: fixed; inset: 0; z-index: 14; pointer-events: none;
+    background: repeating-linear-gradient(180deg, rgba(0,0,0,0) 0 2px, rgba(0,0,0,0.12) 2px 4px);
   }
 
-  /* ---------- Layout (S1 · Refined) ---------- */
+  /* ---------- Frosted glass ---------- */
+  .glass{
+    background: linear-gradient(160deg, rgba(255,255,255,0.075), rgba(255,255,255,0.025));
+    border: 1px solid rgba(255,255,255,0.10);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.12), 0 24px 60px rgba(0,0,0,0.45);
+    backdrop-filter: blur(18px) saturate(140%);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+  }
+
+  /* ---------- Layout ---------- */
   .screen{
+    position: relative;
+    z-index: 1;
     width: min(1280px, 100%);
     min-height: 100vh;
     margin: 0 auto;
-    padding: 56px 72px;
+    padding: 40px 56px;
     display: grid;
     grid-template-columns: minmax(0, 600px) minmax(0, 1fr);
-    gap: 60px;
+    gap: 48px;
     align-items: center;
   }
-  .counter{ display: flex; flex-direction: column; gap: 22px; }
-  .eyebrow{
-    display: flex;
-    justify-content: space-between;
-    gap: 16px;
-    font-size: 14px;
-    font-weight: 500;
-    letter-spacing: 0.24em;
-    text-transform: uppercase;
-    color: var(--muted);
-  }
-  .eyebrow #statusFlag{ color: var(--red); font-size: 12px; letter-spacing: 0.2em; align-self: center; }
 
+  /* ---------- Ring + glass disc ---------- */
+  .ring{
+    position: relative;
+    width: min(600px, 100%);
+    aspect-ratio: 1;
+    display: grid;
+    place-items: center;
+    container-type: inline-size;
+    justify-self: center;
+  }
+  .ring svg{ position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+  #arcGlow{ animation: breathe 5s ease-in-out infinite; }
+  @keyframes breathe{ 50%{ opacity: .35; } }
+  .disc{
+    position: relative;
+    width: 66.6%;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2cqw;
+    text-align: center;
+  }
+  .eyebrow{ font-size: max(10px, 1.85cqw); font-weight: 500; letter-spacing: 0.2em; text-transform: uppercase; color: rgba(57,255,140,0.75); }
   .days{
     font-weight: 800;
-    font-size: clamp(150px, 20vw, 280px);
-    line-height: 0.78;
+    font-size: 28cqw;
+    line-height: 0.82;
     letter-spacing: -0.07em;
-    margin-left: -0.04em;
-    color: var(--red);
+    color: #ffffff;
     font-variant-numeric: tabular-nums;
     user-select: none;
   }
-  .caption{ font-size: 20px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; }
-
-  .breakdown{
-    padding-top: 18px;
-    border-top: 4px solid var(--ink);
-    display: grid;
-    grid-template-columns: repeat(6, minmax(0, 1fr));
-    gap: 18px;
+  .caption{ font-size: max(11px, 2.35cqw); font-weight: 800; letter-spacing: 0.32em; text-transform: uppercase; color: var(--green); }
+  .pill{
+    margin-top: 1cqw;
+    padding: 6px 14px;
+    border-radius: 999px;
+    background: rgba(20,200,110,0.14);
+    border: 1px solid rgba(20,200,110,0.30);
+    font-size: max(10px, 1.85cqw);
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    color: var(--pale);
+    white-space: nowrap;
   }
+
+  /* ---------- Right-hand cards ---------- */
+  .side{ display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+  .card{ border-radius: 22px; padding: 20px 24px; }
+
+  .breakdown{ display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 14px; }
   .unit{ display: flex; flex-direction: column; gap: 6px; user-select: none; }
-  .unit .n{
-    font-size: clamp(30px, 3.2vw, 40px);
-    font-weight: 800;
-    line-height: 1;
-    letter-spacing: -0.02em;
-    font-variant-numeric: tabular-nums;
-  }
-  .unit.sec .n{ color: var(--red); }
-  .unit .l{
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--muted);
-  }
+  .unit .n{ font-size: clamp(28px, 3vw, 38px); font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; }
+  .unit.sec .n{ color: var(--green); }
+  .unit .l{ font-size: 10px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(57,255,140,0.6); }
   .unit.flash .n, .days.flash{ animation: flash 0.9s ease-out; }
-  @keyframes flash{ 0%{ color: #ffffff; } }
+  @keyframes flash{ 0%{ color: var(--green); text-shadow: 0 0 18px var(--green); } }
 
-  .status{ display: flex; flex-wrap: wrap; gap: 14px 34px; }
-  .stat{ display: flex; flex-direction: column; gap: 6px; }
-  .stat .k{ font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); }
-  .stat .v{ font-size: 17px; font-weight: 800; font-variant-numeric: tabular-nums; }
-  .stat .v.red{ color: var(--red); }
-
-  /* ---------- Year grid ---------- */
-  .timeline{ display: flex; flex-direction: column; gap: 14px; min-width: 0; }
-  .timeline .head{
-    display: flex;
-    justify-content: space-between;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--muted);
-  }
-  .grid{
-    display: grid;
-    grid-template-columns: 44px repeat(31, minmax(0, 1fr));
-    gap: 4px;
-    align-items: center;
-  }
-  .month{ font-size: 11px; font-weight: 700; white-space: nowrap; }
-  .month span{ font-weight: 500; color: var(--muted); }
+  .timeline{ display: flex; flex-direction: column; gap: 12px; }
+  .timeline .head{ display: flex; justify-content: space-between; font-size: 10px; font-weight: 500; letter-spacing: 0.22em; text-transform: uppercase; color: rgba(57,255,140,0.6); }
+  .grid{ display: grid; grid-template-columns: 40px repeat(31, minmax(0, 1fr)); gap: 3px; align-items: center; }
+  .month{ font-size: 10px; font-weight: 700; white-space: nowrap; }
+  .month span{ font-weight: 500; color: rgba(var(--ink-rgb),0.45); }
   .cell{ aspect-ratio: 1; }
   .sq{ width: 100%; height: 100%; border-radius: 50%; transition: background .6s; }
-  .sq.out{ box-shadow: inset 0 0 0 1px var(--out); }
-  .sq.todo{ background: var(--todo); }
-  .sq.done{ background: var(--ink); }
-  /* Today: a solid red circle with a soft pulsing red glow (same shape as the gold target day) */
+  .sq.out{ box-shadow: inset 0 0 0 1px rgba(255,255,255,0.07); }
+  .sq.todo{ background: rgba(255,255,255,0.07); }
+  .sq.done{ background: rgba(var(--ink-rgb),0.88); }
+  /* Today: solid green with a soft pulsing glow */
   .sq.today{
-    background: var(--red);
-    box-shadow: 0 0 6px 2px rgba(255,65,54,0.75), 0 0 18px 6px rgba(255,65,54,0.35);
-    animation: redGlow 2.8s ease-in-out infinite;
+    background: var(--green);
+    box-shadow: 0 0 6px 2px rgba(57,255,140,0.8), 0 0 18px 6px rgba(57,255,140,0.4);
+    animation: greenGlow 2.8s ease-in-out infinite;
   }
-  @keyframes redGlow{
-    0%, 100%{ box-shadow: 0 0 6px 2px rgba(255,65,54,0.75), 0 0 18px 6px rgba(255,65,54,0.35); }
-    50%{ box-shadow: 0 0 9px 3px rgba(255,65,54,0.95), 0 0 26px 10px rgba(255,65,54,0.5); }
-  }
-  @media (prefers-reduced-motion: reduce){ .sq.today{ animation: none; } }
-  /* The target day: a glowing gold circle */
+  @keyframes greenGlow{ 50%{ box-shadow: 0 0 9px 3px rgba(57,255,140,0.95), 0 0 26px 10px rgba(57,255,140,0.55); } }
+  /* The target day: gold */
   .sq.target{
-    background: #f3c14b;                              /* flat gold, no 3D shading */
+    background: var(--gold);
     box-shadow: 0 0 6px 2px rgba(243,193,75,0.75), 0 0 18px 6px rgba(243,193,75,0.35);
     animation: goldGlow 2.8s ease-in-out infinite;
   }
-  @keyframes goldGlow{
-    0%, 100%{ box-shadow: 0 0 6px 2px rgba(243,193,75,0.75), 0 0 18px 6px rgba(243,193,75,0.35); }
-    50%{ box-shadow: 0 0 9px 3px rgba(243,193,75,0.95), 0 0 26px 10px rgba(243,193,75,0.5); }
-  }
-  @media (prefers-reduced-motion: reduce){ .sq.target{ animation: none; } }
+  @keyframes goldGlow{ 50%{ box-shadow: 0 0 9px 3px rgba(243,193,75,0.95), 0 0 26px 10px rgba(243,193,75,0.5); } }
+
+  .status{ display: flex; justify-content: space-between; flex-wrap: wrap; gap: 14px 24px; }
+  .stat{ display: flex; flex-direction: column; gap: 5px; }
+  .stat .k{ font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); }
+  .stat .v{ font-size: 16px; font-weight: 800; font-variant-numeric: tabular-nums; }
+  .stat .v.green{ color: var(--green); font-family: 'JetBrains Mono', monospace; font-size: 15px; font-weight: 700; }
 
   /* ---------- Sound button ---------- */
   .sound{
-    position: fixed;
-    top: 18px;
-    right: 18px;
-    z-index: 21;                                    /* stays usable above the final-minute overlay */
-    width: 44px;
-    height: 44px;
-    display: grid;
-    place-items: center;
-    padding: 0;
-    border: 1px solid var(--line);
-    background: rgba(9,9,11,0.85);
-    color: var(--muted);
-    cursor: pointer;
-    transition: color .3s, border-color .3s;
+    position: fixed; top: 18px; right: 18px; z-index: 21;
+    width: 44px; height: 44px; display: grid; place-items: center; padding: 0;
+    border: 1px solid var(--line); border-radius: 12px;
+    background: rgba(1,6,3,0.7);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    color: var(--muted); cursor: pointer; transition: color .3s, border-color .3s;
   }
-  .sound:hover{ color: var(--ink); border-color: var(--muted); }
-  .sound:focus-visible{ outline: 2px solid var(--red); outline-offset: 2px; }
+  .sound:hover{ color: var(--ink); border-color: rgba(255,255,255,0.3); }
+  .sound:focus-visible{ outline: 2px solid var(--green); outline-offset: 2px; }
   .sound svg{ width: 22px; height: 22px; display: none; }
-  .sound[data-mode="all"] .i-all,
-  .sound[data-mode="quiet"] .i-quiet,
-  .sound[data-mode="off"] .i-off{ display: block; }
-  .sound[data-mode="all"]{ color: var(--red); border-color: var(--red); }
-  .sound[data-mode="quiet"]{ color: var(--red); }
+  .sound[data-mode="all"] .i-all, .sound[data-mode="quiet"] .i-quiet, .sound[data-mode="off"] .i-off{ display: block; }
+  .sound[data-mode="all"]{ color: var(--green); border-color: rgba(57,255,140,0.6); }
+  .sound[data-mode="quiet"]{ color: var(--green); }
 
-  /* ---------- "Today is the day" banner over the counters ---------- */
+  /* ---------- "Today is the day" banner ---------- */
   .today-banner{
-    position: fixed;
-    inset: 0;
-    z-index: 15;
-    display: none;
-    place-items: center;
-    padding: 16px;
-    pointer-events: none;
-    background: radial-gradient(ellipse at center, rgba(9,9,11,0.85) 0%, rgba(9,9,11,0.55) 55%, rgba(9,9,11,0.15) 100%);
+    position: fixed; inset: 0; z-index: 15; display: none; place-items: center; padding: 16px; pointer-events: none;
+    background: radial-gradient(ellipse at center, rgba(1,6,3,0.85) 0%, rgba(1,6,3,0.55) 55%, rgba(1,6,3,0.15) 100%);
   }
   body.arrived .today-banner{ display: grid; animation: msgIn 1.4s ease-out both; }
   .today-banner span{
-    font-size: clamp(54px, 10vw, 168px);
-    font-weight: 800;
-    line-height: 0.92;
-    letter-spacing: -0.02em;
-    text-transform: uppercase;
-    text-align: center;
-    color: var(--ink);
+    font-size: clamp(54px, 10vw, 168px); font-weight: 800; line-height: 0.92; letter-spacing: -0.02em;
+    text-transform: uppercase; text-align: center; color: var(--ink);
   }
   @keyframes msgIn{ from{ opacity: 0; transform: scale(1.06); } to{ opacity: 1; transform: none; } }
 
   /* ---------- Final-minute overlay ---------- */
   .final{
-    position: fixed;
-    inset: 0;
-    z-index: 20;
-    display: grid;
-    place-items: center;
-    background: rgba(9,9,11,0.96);
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity .9s ease;
+    position: fixed; inset: 0; z-index: 20; display: grid; place-items: center;
+    background: rgba(1,6,3,0.94);
+    backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    opacity: 0; pointer-events: none; transition: opacity .9s ease;
   }
   .final.show{ opacity: 1; pointer-events: auto; }
-  .final::before{                                   /* red pulse that grows in the last seconds */
-    content: "";
-    position: absolute;
-    inset: 0;
+  .final::before{
+    content: ""; position: absolute; inset: 0;
     background: radial-gradient(ellipse at center, rgba(255,65,54,0) 30%, rgba(255,65,54,0.25) 100%);
-    opacity: 0;
-    transition: opacity .6s;
+    opacity: 0; transition: opacity .6s;
   }
-  .final[data-phase="tense"]::before{ opacity: .35; }
   .final[data-phase="critical"]::before{ opacity: 1; animation: alarm 1s ease-in-out infinite; }
-  .final[data-phase="zero"]::before{ opacity: 0; }
   @keyframes alarm{ 0%,100%{ opacity: .45; } 50%{ opacity: 1; } }
   .final-inner{ position: relative; display: flex; flex-direction: column; align-items: center; gap: 3vh; text-align: center; padding: 16px; }
-  .final-label{
-    font-size: clamp(14px, 1.8vw, 20px);
-    font-weight: 700;
-    letter-spacing: 0.32em;
-    text-transform: uppercase;
-    color: var(--muted);
-  }
+  .final-label{ font-family: 'JetBrains Mono', monospace; font-size: clamp(13px, 1.6vw, 18px); letter-spacing: 0.24em; text-transform: uppercase; color: rgba(57,255,140,0.75); }
   .final[data-phase="critical"] .final-label{ color: var(--red); }
-  .final-digits{
-    font-size: min(46vw, 58vh);
-    font-weight: 800;
-    line-height: 0.8;
-    letter-spacing: -0.07em;
-    font-variant-numeric: tabular-nums;
-    color: var(--ink);
-  }
-  .final[data-phase="tense"] .final-digits, .final[data-phase="critical"] .final-digits{ color: var(--red); }
+  .final-digits{ font-size: min(46vw, 58vh); font-weight: 800; line-height: 0.8; letter-spacing: -0.07em; font-variant-numeric: tabular-nums; color: var(--ink); }
+  .final[data-phase="tense"] .final-digits{ color: var(--green); }
+  .final[data-phase="critical"] .final-digits{ color: var(--red); }
   .final-digits.beat{ animation: beat .5s ease-out; }
   @keyframes beat{ 0%{ transform: scale(1.05); } 100%{ transform: scale(1); } }
-  .final-bar{ width: min(70vw, 720px); height: 4px; background: rgba(255,255,255,0.1); }
-  .final-bar i{ display: block; height: 100%; width: 100%; background: var(--red); transition: width .25s linear; }
-  .final-reached{
-    display: none;
-    font-size: clamp(40px, 8vw, 120px);
-    font-weight: 800;
-    letter-spacing: -0.02em;
-    text-transform: uppercase;
-    color: var(--ink);
-  }
+  .final-bar{ width: min(70vw, 720px); height: 4px; border-radius: 4px; background: rgba(255,255,255,0.1); overflow: hidden; }
+  .final-bar i{ display: block; height: 100%; width: 100%; background: linear-gradient(90deg, #0b6b35, var(--green)); transition: width .25s linear; }
+  .final[data-phase="critical"] .final-bar i{ background: var(--red); }
+  .final-reached{ display: none; font-size: clamp(40px, 8vw, 120px); font-weight: 800; letter-spacing: -0.02em; text-transform: uppercase; color: var(--ink); }
   .final[data-phase="zero"] .final-reached{ display: block; animation: reached 1.4s ease-out both; }
   .final[data-phase="zero"] .final-digits, .final[data-phase="zero"] .final-bar{ display: none; }
   @keyframes reached{ 0%{ opacity: 0; transform: scale(1.3); filter: blur(8px); } 100%{ opacity: 1; transform: none; filter: none; } }
@@ -259,29 +224,28 @@
   .final-controls{ display: none; gap: 10px; margin-top: 2vh; flex-wrap: wrap; justify-content: center; }
   body.previewing .final-controls{ display: flex; }
   .final-controls button, .preview-note button{
-    min-height: 44px; padding: 0 18px;
-    background: transparent; border: 1px solid var(--line); color: var(--ink);
+    min-height: 44px; padding: 0 18px; background: transparent; border: 1px solid var(--line); color: var(--ink);
     font: 700 13px/1 'Manrope', sans-serif; letter-spacing: 0.16em; text-transform: uppercase; cursor: pointer;
   }
   .preview-note{
     position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); z-index: 16;
     display: none; align-items: center; gap: 14px; padding: 8px 8px 8px 16px;
-    background: rgba(9,9,11,0.92); border: 1px solid var(--red);
-    font: 700 12px/1.2 'Manrope', sans-serif; letter-spacing: 0.1em; text-transform: uppercase; color: var(--red);
+    background: rgba(1,6,3,0.92); border: 1px solid var(--green);
+    font: 500 12px/1.2 'JetBrains Mono', monospace; letter-spacing: 0.1em; text-transform: uppercase; color: var(--green);
   }
   body.previewing.arrived .preview-note{ display: flex; }
 
   /* ---------- Phones and narrow windows ---------- */
-  @media (max-width: 960px){
-    .screen{ grid-template-columns: minmax(0, 1fr); padding: 76px 16px 32px; gap: 40px; align-items: start; }
-    .days{ font-size: 38vw; }
-    .breakdown{ grid-template-columns: repeat(3, minmax(0, 1fr)); row-gap: 20px; }
-    .unit .n{ font-size: 36px; }
-    .grid{ grid-template-columns: 36px repeat(31, minmax(0, 1fr)); gap: 2px; }
+  @media (max-width: 1000px){
+    .screen{ grid-template-columns: minmax(0, 1fr); padding: 72px 16px 32px; gap: 28px; align-items: start; }
+    .ring{ width: min(560px, 100%); }
+    .breakdown{ grid-template-columns: repeat(3, minmax(0, 1fr)); row-gap: 18px; }
+    .grid{ grid-template-columns: 34px repeat(31, minmax(0, 1fr)); gap: 2px; }
     .month{ font-size: 9px; }
+    .card{ padding: 18px 16px; }
   }
   @media (prefers-reduced-motion: reduce){
-    .final::before, .final-digits.beat, .final-reached, .final-flash, .today-banner{ animation: none !important; }
+    #arcGlow, .sq.today, .sq.target, .final::before, .final-digits.beat, .final-reached, .final-flash, .today-banner{ animation: none !important; }
   }
 </style>
 </head>
@@ -315,32 +279,58 @@
   <svg class="i-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="m22 9-6 6M16 9l6 6"/></svg>
 </button>
 
+<canvas id="rain" aria-hidden="true"></canvas>
+<div class="scan" aria-hidden="true"></div>
+
 <main class="screen">
 
-  <section class="counter">
-    <div class="eyebrow"><span>Walid's Counter</span><span id="statusFlag">Countdown active</span></div>
-    <div class="days" id="daysDisplay" aria-label="Days remaining">000</div>
-    <div class="caption" id="daysLabel">Days to go</div>
-
-    <div class="breakdown" aria-label="Time remaining">
-      <div class="unit" id="uMo"><span class="n" id="dMo">00</span><span class="l">Months</span></div>
-      <div class="unit" id="uWk"><span class="n" id="dWk">00</span><span class="l">Weeks</span></div>
-      <div class="unit" id="uDy"><span class="n" id="dDy">00</span><span class="l">Days</span></div>
-      <div class="unit" id="uHr"><span class="n" id="dHr">00</span><span class="l">Hours</span></div>
-      <div class="unit" id="uMi"><span class="n" id="dMi">00</span><span class="l">Min</span></div>
-      <div class="unit sec" id="uSe"><span class="n" id="dSe">00</span><span class="l">Sec</span></div>
-    </div>
-
-    <div class="status">
-      <div class="stat"><span class="k">Target</span><span class="v" id="targetDate">—</span></div>
-      <div class="stat"><span class="k">Progress</span><span class="v red" id="progress">—</span></div>
-      <div class="stat"><span class="k">Local time</span><span class="v" id="localClock">—</span></div>
+  <section class="ring" aria-label="Countdown">
+    <svg viewBox="0 0 600 600" aria-hidden="true">
+      <defs>
+        <linearGradient id="arcGrad" x1="300" y1="40" x2="560" y2="300" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stop-color="#0b6b35"/>
+          <stop offset="1" stop-color="#39ff8c"/>
+        </linearGradient>
+      </defs>
+      <circle cx="300" cy="300" r="260" fill="none" stroke="rgba(20,200,110,0.13)" stroke-width="24"/>
+      <circle cx="300" cy="300" r="282" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+      <circle cx="300" cy="300" r="232" fill="none" stroke="rgba(57,255,140,0.35)" stroke-width="1" stroke-dasharray="2 9"/>
+      <g stroke="rgba(255,255,255,0.28)" stroke-width="2" stroke-linecap="round"><line x1="300.0" y1="10.0" x2="300.0" y2="0.0"/><line x1="445.0" y1="48.9" x2="450.0" y2="40.2"/><line x1="551.1" y1="155.0" x2="559.8" y2="150.0"/><line x1="590.0" y1="300.0" x2="600.0" y2="300.0"/><line x1="551.1" y1="445.0" x2="559.8" y2="450.0"/><line x1="445.0" y1="551.1" x2="450.0" y2="559.8"/><line x1="300.0" y1="590.0" x2="300.0" y2="600.0"/><line x1="155.0" y1="551.1" x2="150.0" y2="559.8"/><line x1="48.9" y1="445.0" x2="40.2" y2="450.0"/><line x1="10.0" y1="300.0" x2="0.0" y2="300.0"/><line x1="48.9" y1="155.0" x2="40.2" y2="150.0"/><line x1="155.0" y1="48.9" x2="150.0" y2="40.2"/></g>
+      <circle id="arcGlow" cx="300" cy="300" r="260" fill="none" stroke="#39ff8c" stroke-opacity="0.55" stroke-width="40" stroke-dasharray="0 1634" stroke-linecap="round" transform="rotate(-90 300 300)" style="filter: blur(14px)"/>
+      <circle id="arc" cx="300" cy="300" r="260" fill="none" stroke="url(#arcGrad)" stroke-width="24" stroke-dasharray="0 1634" stroke-linecap="round" transform="rotate(-90 300 300)"/>
+      <circle id="nowDot" cx="300" cy="40" r="7" fill="#39ff8c"/>
+      <circle id="nowHalo" cx="300" cy="40" r="16" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1"/>
+      <circle cx="300" cy="40" r="22" fill="rgba(243,193,75,0.18)"/>
+      <circle cx="300" cy="40" r="10" fill="#f3c14b"/>
+    </svg>
+    <div class="disc glass">
+      <div class="eyebrow mono">&gt; walid.counter_</div>
+      <div class="days" id="daysDisplay" aria-label="Days remaining">000</div>
+      <div class="caption" id="daysLabel">Days to go</div>
+      <div class="pill mono">SYS · <span id="progress">0.0%</span> COMPLETE</div>
     </div>
   </section>
 
-  <section class="timeline">
-    <div class="head"><span>Timeline</span><span id="dayCount">Day 000 / 365</span></div>
-    <div class="grid" id="grid" role="img" aria-label="Days elapsed"></div>
+  <section class="side">
+    <div class="card glass breakdown" aria-label="Time remaining">
+      <div class="unit" id="uMo"><span class="n" id="dMo">00</span><span class="l mono">Months</span></div>
+      <div class="unit" id="uWk"><span class="n" id="dWk">00</span><span class="l mono">Weeks</span></div>
+      <div class="unit" id="uDy"><span class="n" id="dDy">00</span><span class="l mono">Days</span></div>
+      <div class="unit" id="uHr"><span class="n" id="dHr">00</span><span class="l mono">Hours</span></div>
+      <div class="unit" id="uMi"><span class="n" id="dMi">00</span><span class="l mono">Min</span></div>
+      <div class="unit sec" id="uSe"><span class="n" id="dSe">00</span><span class="l mono">Sec</span></div>
+    </div>
+
+    <div class="card glass timeline">
+      <div class="head mono"><span>// timeline</span><span id="dayCount">day_000 / 365</span></div>
+      <div class="grid" id="grid" role="img" aria-label="Days elapsed"></div>
+    </div>
+
+    <div class="card glass status">
+      <div class="stat"><span class="k">Target</span><span class="v" id="targetDate">—</span></div>
+      <div class="stat"><span class="k">Status</span><span class="v green" id="statusFlag">[ ACTIVE ]</span></div>
+      <div class="stat"><span class="k">Local time</span><span class="v" id="localClock">—</span></div>
+    </div>
   </section>
 
 </main>
@@ -1137,6 +1127,51 @@
     if (document.visibilityState === "visible" && pendingLaunch && actx) playLaunchNow();
   });
 
+  /* ---------------- Progress ring ---------------- */
+  const RING_C = 2 * Math.PI * 260;
+  const arcEl = document.getElementById("arc"), arcGlowEl = document.getElementById("arcGlow");
+  const nowDot = document.getElementById("nowDot"), nowHalo = document.getElementById("nowHalo");
+  function setRing(pct){
+    const len = (RING_C * pct / 100).toFixed(1);
+    arcEl.setAttribute("stroke-dasharray", `${len} ${RING_C}`);
+    arcGlowEl.setAttribute("stroke-dasharray", `${len} ${RING_C}`);
+    const a = (pct / 100) * 2 * Math.PI - Math.PI / 2;               // 0% at the top, clockwise
+    const x = (300 + 260 * Math.cos(a)).toFixed(1), y = (300 + 260 * Math.sin(a)).toFixed(1);
+    nowDot.setAttribute("cx", x); nowDot.setAttribute("cy", y);
+    nowHalo.setAttribute("cx", x); nowHalo.setAttribute("cy", y);
+  }
+
+  /* ---------------- Code rain (behind the glass) ---------------- */
+  const rain = document.getElementById("rain");
+  const rctx = rain.getContext("2d");
+  const GLYPHS = "アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホ0123456789";
+  const FS = 16;
+  let rcols = 0, drops = [], speeds = [];
+  function sizeRain(){
+    rain.width = innerWidth; rain.height = innerHeight;
+    rcols = Math.ceil(innerWidth / FS);
+    drops = Array.from({ length: rcols }, () => Math.random() * -60);
+    speeds = Array.from({ length: rcols }, () => 0.3 + Math.random() * 0.6);
+    rctx.fillStyle = "#010603"; rctx.fillRect(0, 0, rain.width, rain.height);
+  }
+  sizeRain();
+  addEventListener("resize", sizeRain);
+  function drawRain(){
+    rctx.fillStyle = "rgba(1, 6, 3, 0.09)";                  // fade = trail length
+    rctx.fillRect(0, 0, rain.width, rain.height);
+    rctx.font = FS + "px 'JetBrains Mono', monospace";
+    for (let i = 0; i < rcols; i++){
+      const y = Math.floor(drops[i]) * FS, x = i * FS;
+      rctx.fillStyle = "rgba(190, 255, 215, 0.34)";           // bright leading glyph
+      rctx.fillText(GLYPHS[(Math.random() * GLYPHS.length) | 0], x, y);
+      rctx.fillStyle = "rgba(57, 255, 140, 0.18)";            // trailing glyph
+      rctx.fillText(GLYPHS[(Math.random() * GLYPHS.length) | 0], x, y - FS);
+      if (y > rain.height && Math.random() > 0.97) drops[i] = Math.random() * -20;
+      drops[i] += speeds[i];
+    }
+  }
+  if (!matchMedia("(prefers-reduced-motion: reduce)").matches) setInterval(drawRain, 60);
+
   /* ---------------- Tick ---------------- */
   const daysLabel = document.getElementById("daysLabel");
   const dayCount = document.getElementById("dayCount");
@@ -1155,21 +1190,23 @@
       // At and after the target: everything reads zero and "Today is the day" shows (once the overlay has gone)
       document.body.classList.add("launched");
       document.body.classList.toggle("arrived", !inFinal);
-      statusFlag.textContent = "Today is the day";
+      statusFlag.textContent = "[ TODAY IS THE DAY ]";
       progress.textContent = "100%";
-      dayCount.textContent = `Day ${totalDays} / ${totalDays}`;
+      setRing(100);
+      dayCount.textContent = `day_${totalDays} / ${totalDays}`;
       paintGrid(null, true);
       b = ZERO; daysLeft = 0;
       if (firstRun && !previewing){ pendingLaunch = true; if (actx) playLaunchNow(); }   // opened after the date
     } else {
       document.body.classList.remove("launched", "arrived");
-      statusFlag.textContent = previewing ? "Preview" : "Countdown active";
+      statusFlag.textContent = previewing ? "[ PREVIEW ]" : "[ ACTIVE ]";
       const todayKey = dateKey(now);
       paintGrid(todayKey, false);
       const dayNum = Math.max(dots.findIndex(x => x.key === todayKey) + 1, 0);
-      dayCount.textContent = `Day ${pad(dayNum, 3)} / ${totalDays}`;
+      dayCount.textContent = `day_${pad(dayNum, 3)} / ${totalDays}`;
       const pct = Math.max(0, Math.min(100, (now - startDate) / (targetDate - startDate) * 100));
       progress.textContent = pct.toFixed(1) + "%";
+      setRing(pct);
       b = breakdown(now, targetDate);
       // Count calendar days on the wall clock, so summer/winter time changes can't shift it by an hour
       const wall = (d) => Date.UTC(d.getFullYear(), d.getMonth(), d.getDate(), d.getHours(), d.getMinutes(), d.getSeconds(), d.getMilliseconds());
