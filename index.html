@@ -168,6 +168,24 @@
   .stat .v{ font-size: 16px; font-weight: 800; font-variant-numeric: tabular-nums; }
   .stat .v.green{ color: var(--green); font-family: 'JetBrains Mono', monospace; font-size: 15px; font-weight: 700; }
 
+  /* ---------- Count direction button (top left) ---------- */
+  .dir{
+    position: fixed; top: 18px; left: 18px; z-index: 21;
+    width: 44px; height: 44px; display: grid; place-items: center; padding: 0;
+    border: 1px solid rgba(57,255,140,0.6); border-radius: 12px;
+    background: rgba(1,6,3,0.7);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    color: var(--green); cursor: pointer; transition: color .3s, border-color .3s;
+    font: 600 12px/1 'JetBrains Mono', monospace; letter-spacing: 0.12em; text-transform: uppercase;
+  }
+  .dir:hover{ border-color: rgba(255,255,255,0.4); }
+  .dir:focus-visible{ outline: 2px solid var(--green); outline-offset: 2px; }
+  .dir svg{ width: 22px; height: 22px; transition: transform .4s ease; }
+  .dir span{ position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }   /* text kept for screen readers only */
+  .dir[data-dir="up"] svg{ transform: rotate(180deg); }
+  body.gold .dir{ border-color: rgba(243,193,75,0.6); }
+  body.launched .dir{ display: none; }                 /* after the day it always counts up */
+
   /* ---------- Sound button ---------- */
   .sound{
     position: fixed; top: 18px; right: 18px; z-index: 21;
@@ -317,6 +335,11 @@
 <div class="today-banner" id="todayBanner" role="status"><div class="tb"><div class="tb-eye mono" id="tbEye"></div><span id="tbMain">Today is<br>the day</span><div class="tb-date mono" id="tbDate"></div></div></div>
 
 <div class="preview-note" id="previewNote">Preview · returning to the live countdown <button type="button" id="exitBtn2">Exit now</button></div>
+
+<button class="dir" id="dirBtn" type="button" data-dir="down" title="Counting down to 23 Oct 2027 — tap to count up from 23 Oct 2026" aria-label="Switch between counting down to the target and counting up from the start">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v16M6 14l6 6 6-6"/></svg>
+  <span id="dirText">To 23 Oct 2027</span>
+</button>
 
 <button class="sound" id="soundBtn" type="button" data-mode="all">
   <!-- all sound on -->
@@ -1235,6 +1258,28 @@
   let firstRun = true;
   let msgShownAt = null;       // when the final message first appeared
 
+  // ---------- Count direction: down to the target (default) or up from the start ----------
+  const dirBtn = document.getElementById("dirBtn"), dirText = document.getElementById("dirText");
+  let countUp = false;
+  try { countUp = localStorage.getItem("walidCounterDir") === "up"; } catch (e) {}
+  function showDir(){
+    dirBtn.dataset.dir = countUp ? "up" : "down";
+    dirText.textContent = countUp ? "From 23 Oct 2026" : "To 23 Oct 2027";
+    dirBtn.title = countUp ? "Counting up from 23 Oct 2026 — tap to count down to 23 Oct 2027" : "Counting down to 23 Oct 2027 — tap to count up from 23 Oct 2026";
+  }
+  showDir();
+  dirBtn.addEventListener("click", () => {
+    countUp = !countUp;
+    try { localStorage.setItem("walidCounterDir", countUp ? "up" : "down"); } catch (e) {}
+    showDir();
+    prev = null;                                     // a switch is not a tick: no sounds
+    update();
+    ["daysDisplay", "uMo", "uWk", "uDy", "uHr", "uMi", "uSe"].forEach(id => {
+      const el = document.getElementById(id);
+      el.classList.remove("flash"); void el.offsetWidth; el.classList.add("flash");
+    });
+  });
+
   function update(){
     const now = nowTime();
     const diff = targetDate - now;
@@ -1290,9 +1335,16 @@
       const pct = Math.max(0, Math.min(100, (now - startDate) / (targetDate - startDate) * 100));
       progress.textContent = pct.toFixed(1) + "%";
       setRing(pct);
+      if (countUp){
+        // Count up from the start date instead
+        b = breakdown(startDate, now);
+        daysLeft = Math.floor((wall(now) - wall(startDate)) / DAY);
+        daysLabel.textContent = "Days since start";
+      } else {
       b = breakdown(now, targetDate);
       // Count calendar days on the wall clock, so summer/winter time changes can't shift it by an hour
       daysLeft = Math.floor((wall(targetDate) - wall(now)) / DAY);
+      }
     }
 
     disp.days.set(pad(daysLeft, 3));
